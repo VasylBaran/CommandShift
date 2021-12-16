@@ -98,13 +98,13 @@ bool KeyPressCatcher::init()
     CGEventMask modifiersPressedMask = CGEventMaskBit(kCGEventFlagsChanged);
 
     m_eventTapPtr = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, modifiersPressedMask,
-                        [] (CGEventTapProxy, CGEventType type, CGEventRef event, void *keyPressCatcherWarPtr)
+                        [] (CGEventTapProxy, CGEventType type, CGEventRef event, void *keyPressCatcherRawPtr)
                         {            
                            CGEventFlags flags = CGEventGetFlags(event);
 
                            if (flags & kCGEventFlagMaskControl && flags & kCGEventFlagMaskShift)
                            {
-                           static_cast<KeyPressCatcher *>(keyPressCatcherWarPtr)->sendSystemDefaultChangeLanguageShortcut();
+                           static_cast<KeyPressCatcher *>(keyPressCatcherRawPtr)->sendSystemDefaultChangeLanguageShortcut();
                            }
 
                         return event;
