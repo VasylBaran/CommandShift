@@ -1,34 +1,12 @@
 #include "keypresscatcher.h"
 
+#include "constants.h"
+
 #include <QApplication>
 #include <QSystemTrayIcon>
 #include <QMenu>
 #include <QDesktopServices>
 #include <QUrl>
-#include <QTimer>
-
-namespace
-{
-void notifyAboutSuccessfulStart(QSystemTrayIcon& systemTrayIconRef)
-{
-    systemTrayIconRef.showMessage("CommandShift is now up and running",
-                               "Thank you for using my app! — Vasyl Baran, developer.",
-                               QSystemTrayIcon::Information,
-                               30000);
-}
-
-void retryInit(KeyPressCatcher& catcherRef, QSystemTrayIcon& systemTrayIconRef)
-{
-    QTimer::singleShot(1000, [&catcherRef, &systemTrayIconRef]
-    {
-        auto successfullyStartedLocal = catcherRef.init();
-        if (successfullyStartedLocal != true)
-            retryInit(catcherRef, systemTrayIconRef);
-        else
-            notifyAboutSuccessfulStart(systemTrayIconRef);
-    });
-}
-}
 
 int main(int argc, char *argv[])
 {
@@ -45,22 +23,15 @@ int main(int argc, char *argv[])
     systemTrayIcon.setToolTip("CommandShift (1.0) - developed by Vasyl Baran");
     systemTrayIcon.show();
 
-    KeyPressCatcher catcher;
-    auto successfullyStarted = catcher.init();
-
-    if (successfullyStarted != true)
+    auto showMessageCallback = [&systemTrayIcon](const QString& title, const QString& message)
     {
-        systemTrayIcon.showMessage("One more thing...",
-                                   "Please add CommandShift to \"Security & Privacy -> Privacy -> Accessibility\" in order for it to work properly",
-                                   QSystemTrayIcon::Warning,
+        systemTrayIcon.showMessage(title,
+                                   message,
+                                   QIcon(),
                                    30000);
+    };
 
-        retryInit(catcher, systemTrayIcon);
-    }
-    else
-    {
-        notifyAboutSuccessfulStart(systemTrayIcon);
-    }
+    KeyPressCatcher catcher(showMessageCallback);
 
     return a.exec();
 }

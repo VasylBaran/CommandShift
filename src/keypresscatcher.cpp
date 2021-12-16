@@ -1,11 +1,78 @@
 #include "keypresscatcher.h"
 
-#include <ApplicationServices/ApplicationServices.h>
+#include "constants.h"
 
-namespace
+#include <QCoreApplication>
+#include <QTimer>
+
+KeyPressCatcher::KeyPressCatcher(std::function<void (const QString& title, const QString& message)> showMessageCallback)
+: m_showMessageCallback{showMessageCallback}
 {
-void sendSystemDefaultChangeLanguageShortcut()
+auto successfullyStarted = init();
+if (successfullyStarted != true)
 {
+    m_showMessageCallback(CS::setupAccessibilityTitle,
+                          CS::setupAccessibilityMessage);
+
+    retryInit();
+}
+else
+{
+    notifyAboutSuccessfulStart();
+}
+}
+
+KeyPressCatcher::~KeyPressCatcher()
+{
+    if (m_eventTapPtr != nullptr)
+    {
+        CGEventTapEnable(m_eventTapPtr, false);
+        CFRelease(m_eventTapPtr);
+    }
+}
+
+void KeyPressCatcher::notifyUserAboutLostPrivileges()
+{
+    m_showMessageCallback(CS::privilegesLostTitle,
+                          CS::privilegesLostMessage);
+}
+
+void KeyPressCatcher::notifyAboutSuccessfulStart()
+{
+    m_showMessageCallback(CS::allGoodTitle,
+                          CS::allGoodMessage);
+}
+
+void KeyPressCatcher::retryInit()
+{
+    QTimer::singleShot(1000, [this]
+    {
+        auto successfullyStartedLocal = init();
+        if (successfullyStartedLocal != true)
+            retryInit();
+        else
+            notifyAboutSuccessfulStart();
+    });
+}
+
+void KeyPressCatcher::sendSystemDefaultChangeLanguageShortcut()
+{
+    if (m_eventTapPtr != nullptr)
+    {
+        CGEventTapEnable(m_eventTapPtr, false);
+        CFRelease(m_eventTapPtr);
+        m_eventTapPtr = nullptr;
+    }
+
+    // We lost our privileges (i.e. user removed CommandShift from Accessibility list)
+    // TODO: is this overkill to do this just to handle the case when we were removed from Accessibility list?
+    if (init() != true)
+    {
+        notifyUserAboutLostPrivileges();
+        retryInit();
+        return;
+    }
+
    // Creating a 'Shift + Alt' event
    CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
    CGEventRef spaceDown = CGEventCreateKeyboardEvent(src, 0x31, true);
@@ -21,37 +88,37 @@ void sendSystemDefaultChangeLanguageShortcut()
    CGEventPost(loc, spaceDown);
    CGEventPost(loc, spaceUp);
 
+   CFRelease(src);
    CFRelease(spaceDown);
    CFRelease(spaceUp);
-}
 }
 
 bool KeyPressCatcher::init()
 {
-    CGEventMask modifiersPressedMask = CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventFlagsChanged);
+    CGEventMask modifiersPressedMask = CGEventMaskBit(kCGEventFlagsChanged);
 
-    auto eventTap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, modifiersPressedMask,
-                        [] (CGEventTapProxy, CGEventType type, CGEventRef event, void*)
-                        {
+    m_eventTapPtr = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, modifiersPressedMask,
+                        [] (CGEventTapProxy, CGEventType type, CGEventRef event, void *keyPressCatcherWarPtr)
+                        {            
                            CGEventFlags flags = CGEventGetFlags(event);
 
                            if (flags & kCGEventFlagMaskControl && flags & kCGEventFlagMaskShift)
                            {
-                           sendSystemDefaultChangeLanguageShortcut();
+                           static_cast<KeyPressCatcher *>(keyPressCatcherWarPtr)->sendSystemDefaultChangeLanguageShortcut();
                            }
 
                         return event;
                         }, this);
 
-    if (eventTap == nullptr)
+    if (m_eventTapPtr == nullptr)
     {
        return false;
     }
 
     CFRunLoopAddSource(CFRunLoopGetCurrent(),
-                       CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0),
+                       CFMachPortCreateRunLoopSource(kCFAllocatorDefault, m_eventTapPtr, 0),
                        kCFRunLoopCommonModes);
 
-     CGEventTapEnable(eventTap, true);
+     CGEventTapEnable(m_eventTapPtr, true);
      return true;
 }

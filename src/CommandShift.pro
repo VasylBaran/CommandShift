@@ -15,6 +15,7 @@ SOURCES += \
     main.cpp
 
 HEADERS += \
+    constants.h \
     keypresscatcher.h
 
 LIBS += -framework ApplicationServices
