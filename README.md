@@ -14,8 +14,8 @@ CommandShift is a free and open-source app that allows you to change input sourc
 
 # Support 
 If you have found CommandShift useful and would like to say 'thank you' please consider supporting my endeavors. It encourages me to further support and update CommandShift as new version of MacOS come out. 
-* PayPal (one-time or monthly): https://www.paypal.com/donate/?hosted_button_id=WZAJV3PYPWUHA
-* Patreon (one-time or monthly): https://www.patreon.com/Vasyl_Baran
+* PayPal (one-time): https://www.paypal.com/donate/?hosted_button_id=WZAJV3PYPWUHA
+* Patreon (monthly): https://www.patreon.com/Vasyl_Baran
 
 
 I'm a Software engineer and Digital artist and I'm glad to be useful.
