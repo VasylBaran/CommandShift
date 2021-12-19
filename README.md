@@ -1,5 +1,5 @@
 # CommandShift
-CommandShift is a free and open-source app that allows you to change input source using Windows-style (Command + Shift) shortcut. By default MacOS doesn't support shortcuts that consist of modifier keys only.
+CommandShift is a free and open-source app that allows you to change input source using Windows-style shortcut (e.g. Command + Shift, Option + Shift, Control + Shift or Fn + Shift. It's customizable). By default MacOS doesn't support shortcuts that consist of modifier keys only.
 
 # How-to use
 1. Download Intel or ARM64(aka M1) dmg
