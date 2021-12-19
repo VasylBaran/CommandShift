@@ -1,34 +1,56 @@
 #include "keypresscatcher.h"
 
-#include "constants.h"
-
 #include <QCoreApplication>
 #include <QTimer>
 
 KeyPressCatcher::KeyPressCatcher(std::function<void (const QString& title, const QString& message)> showMessageCallback)
 : m_showMessageCallback{showMessageCallback}
-{
-auto successfullyStarted = init();
-if (successfullyStarted != true)
-{
-    m_showMessageCallback(CS::setupAccessibilityTitle,
-                          CS::setupAccessibilityMessage);
+{    
+    auto secondShortcutKeyQVariant = m_settings.value(CS::secondShortcutKeySettingKeyword);
+    if (!secondShortcutKeyQVariant.isNull())
+    {
+        auto keyEnumValue = secondShortcutKeyQVariant.toInt();
+        // Value should be within expected range
+        if (CS::SecondShortcutKeyEnum::_FirstElem < keyEnumValue && keyEnumValue < CS::SecondShortcutKeyEnum::_LastElem)
+        {
+            m_secondShortcutKey = static_cast<CS::SecondShortcutKeyEnum>(keyEnumValue);
+        }
+    }
 
-    retryInit();
-}
-else
-{
-    notifyAboutSuccessfulStart();
-}
+    auto successfullyStarted = init();
+    if (successfullyStarted != true)
+    {
+        m_showMessageCallback(CS::setupAccessibilityTitle,
+                              CS::setupAccessibilityMessage);
+        retryInit();
+    }
+    else
+    {
+        notifyAboutSuccessfulStart();
+    }
 }
 
 KeyPressCatcher::~KeyPressCatcher()
 {
+    // Saving user preference
+    m_settings.setValue(CS::secondShortcutKeySettingKeyword, m_secondShortcutKey);
+
     if (m_eventTapPtr != nullptr)
     {
         CGEventTapEnable(m_eventTapPtr, false);
         CFRelease(m_eventTapPtr);
     }
+}
+
+void KeyPressCatcher::setSecondShortcutKey(CS::SecondShortcutKeyEnum keyValue)
+{
+    qDebug() << "set secondary key to" << keyValue;
+    m_secondShortcutKey = keyValue;
+}
+
+CS::SecondShortcutKeyEnum KeyPressCatcher::getSecondShortcutKey() const
+{
+    return m_secondShortcutKey;
 }
 
 void KeyPressCatcher::notifyUserAboutLostPrivileges()
@@ -101,10 +123,19 @@ bool KeyPressCatcher::init()
                         [] (CGEventTapProxy, CGEventType type, CGEventRef event, void *keyPressCatcherRawPtr)
                         {            
                            CGEventFlags flags = CGEventGetFlags(event);
-
-                           if (flags & kCGEventFlagMaskControl && flags & kCGEventFlagMaskShift)
+                           // If Shift was pressed
+                           if (flags & kCGEventFlagMaskShift)
                            {
-                           static_cast<KeyPressCatcher *>(keyPressCatcherRawPtr)->sendSystemDefaultChangeLanguageShortcut();
+                           // ... and if a second key that we expected (depending on configuration) was pressed
+                           auto secondTriggerKey = static_cast<KeyPressCatcher *>(keyPressCatcherRawPtr)->getSecondShortcutKey();
+                           if ((secondTriggerKey == CS::SecondShortcutKeyEnum::GlobalFN && flags & kCGEventFlagMaskSecondaryFn) ||
+                               (secondTriggerKey == CS::SecondShortcutKeyEnum::Control && flags & kCGEventFlagMaskControl) ||
+                               (secondTriggerKey == CS::SecondShortcutKeyEnum::Option && flags & kCGEventFlagMaskAlternate) ||
+                               (secondTriggerKey == CS::SecondShortcutKeyEnum::Command && flags & kCGEventFlagMaskCommand))
+                            {
+                                // ... then we change the language
+                                static_cast<KeyPressCatcher *>(keyPressCatcherRawPtr)->sendSystemDefaultChangeLanguageShortcut();
+                            }
                            }
 
                         return event;
