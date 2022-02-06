@@ -11,6 +11,11 @@ CommandShift is a free and open-source app that allows you to change input sourc
 # Downloads
 * Bitbucket: https://bitbucket.org/vasylbaran7/downloads/downloads/
 * Sourceforge: https://sourceforge.net/projects/commandshift/files/
+* GitHub: https://github.com/VasylBaran/CommandShift/tree/main/Releases
+
+# Latest installer checksums (MD5)
+* ARM64: aa73178427ecc8a9009d8122894c2d8f
+* Intel: e0b725bf85666ef517145ce12d8da519
 
 # Support 
 If you have found CommandShift useful and would like to say 'thank you' please consider supporting my endeavors. It encourages me to further support and update CommandShift as new versions of MacOS come out. 
