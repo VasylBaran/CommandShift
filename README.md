@@ -14,7 +14,7 @@ CommandShift is a free and open-source app that allows you to change input sourc
 * GitHub: https://github.com/VasylBaran/CommandShift/releases/
 
 **Latest installer checksums (MD5)**
-* ARM64: 3b3b485ba3602a9acdeb8ca05c777655
+* ARM64: 3d5bc5abce1ffac17503955b4398e4ab
 * Intel: e0b725bf85666ef517145ce12d8da519
 
 # Support 
