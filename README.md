@@ -8,6 +8,10 @@ CommandShift is a free and open-source app that allows you to change input sourc
 4. Enjoy!
 5. (optionally) Add CommandShift to your startup items ("Users & Groups -> Login Items")
 
+# FAQ:
+Q: I've added CommandShift to "Security & Privacy -> Privacy -> Accessibility" but it doesn't work =(
+A: Please make sure that your settings in "Keyboard -> Shortcuts -> Input Sources" are set to default (you can easily do that by pressing "Restore Defaults" button there)
+
 # Downloads
 * Bitbucket: https://bitbucket.org/vasylbaran7/downloads/downloads/
 * Sourceforge: https://sourceforge.net/projects/commandshift/files/
