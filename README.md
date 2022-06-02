@@ -13,6 +13,8 @@ CommandShift is a free and open-source app that allows you to change input sourc
 * A: Please make sure that your settings in "Keyboard -> Shortcuts -> Input Sources" are set to default (you can easily do that by pressing "Restore Defaults" button there)
 * Q: How do I choose which shortcut should switch language?
 * A: Find CommandShift ('CS' icon) in menu bar at the top-right and click on it, there you'll find "Change language with..." drop-down. Select the one you prefer =) 
+* Q: I get "CommandShift is damaged and can't be opened" error
+* A: Please run this command in Terminal xattr -cr /Applications/CommandShift.app
 
 # Downloads
 * Bitbucket: https://bitbucket.org/vasylbaran7/downloads/downloads/
