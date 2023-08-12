@@ -8,16 +8,29 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QActionGroup>
+#include <QSettings>
+
+namespace
+{
+    constexpr static auto s_hide_tray_icon_setting_name = "tray_icon/hide";
+}
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QMenu menu;
+    auto settings = new QSettings(&a);
+    auto hide_tray_icon = settings->value(s_hide_tray_icon_setting_name, false).toBool();
 
     auto systemTrayIcon = new QSystemTrayIcon(QIcon(":/icons/trayicon.png"), &menu);
     systemTrayIcon->setContextMenu(&menu);
     systemTrayIcon->setToolTip("CommandShift (1.0) - developed by Vasyl Baran");
-    systemTrayIcon->show();
+
+    if (!hide_tray_icon)
+    {
+        systemTrayIcon->show();
+    }
+
     auto showMessageCallback = [systemTrayIcon](const QString& title, const QString& message)
     {
         systemTrayIcon->showMessage(title,
@@ -77,6 +90,9 @@ int main(int argc, char *argv[])
     secondShortcutKeyDropDownActionMenu->addAction(controlAction);
     secondShortcutKeyDropDownActionMenu->addAction(optionAction);
     secondShortcutKeyDropDownActionMenu->addAction(commandAction);
+
+    auto hideTrayIconAction = menu.addAction("Hide icon from tray menu");
+    QObject::connect(hideTrayIconAction, &QAction::triggered, systemTrayIcon, [systemTrayIcon, settings] { settings->setValue(s_hide_tray_icon_setting_name, true); systemTrayIcon->hide(); });
 
     auto quitAction = menu.addAction("Quit");
     QObject::connect(quitAction, &QAction::triggered, &a, [&a] { a.quit(); });
