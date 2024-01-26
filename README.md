@@ -15,6 +15,8 @@ CommandShift is a free and open-source app that allows you to change input sourc
 * A: Find CommandShift ('CS' icon) in menu bar at the top-right and click on it, there you'll find "Change language with..." drop-down. Select the one you prefer =) 
 * Q: I get "CommandShift is damaged and can't be opened" error
 * A: Please run this command in Terminal: _xattr -cr /Applications/CommandShift.app_
+* Q: How to automatically launch CommandShift when computer starts?
+* A: You can add CommandShift to your list of auto-start items by opening System Settings panel -> Users and Groups OR General (depending on what version of macOS you're using) -> Login Items -> [+] -> [select CommandShift app]
 
 # Downloads
 * Bitbucket: https://bitbucket.org/vasylbaran7/downloads/downloads/
