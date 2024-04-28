@@ -1,8 +1,18 @@
-# CommandShift
-CommandShift is a free and open-source app that allows you to change input source using Windows-style shortcut (e.g. Command + Shift, Option + Shift, Control + Shift or Fn + Shift. It's customizable). By default MacOS doesn't support shortcuts that consist of modifier keys only.
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://vshymanskyy.github.io/StandWithUkraine/)
 
+# Backstory
+Initially I wrote this program for myself since I bought my first Macbook and quickly realized that I can't use 'Alt'+Shift to change language on macOS. 
+After a while a friend of mine bought his first Macbook and asked me "How can I change language using 'Alt'+Shift? I can't seem to change it in system preferences". I shared my app with him and at that point I realized that other people might find it useful as well so decided to share this app with the world.
+
+# CommandShift
+CommandShift is a free and open-source app that allows you to change input source using Windows-style shortcut (e.g. Command + Shift, Option + Shift, Control + Shift, Fn + Shift or just Shift. It's quite customizable). By default MacOS doesn't support shortcuts that consist of modifier keys only. CommandShift solves this problem.
+
+# Support 
+I'm a single software engineer from Ukraine. If you found CommandShift useful and would like to say 'thank you' please consider supporting me on [Patreon](https://www.patreon.com/Vasyl_Baran) or [PayPal](https://www.paypal.com/donate/?hosted_button_id=WZAJV3PYPWUHA). It encourages me to further improve, support and update CommandShift as new versions of MacOS come out. 
+
+**My current goal is $99 which is a membership fee for Apple Developer program** so that I can propertly sign and notarize CommandShift using Apple developer certificate.
 # How-to use
-1. Download Intel or ARM64(aka M1) dmg
+1. Download CommandShift-universal.dmg
 2. Drag'n'drop CommandShift application from dmg-file to your Applications folder
 3. Add CommandShift to "Security & Privacy -> Privacy -> Accessibility" in order for it to work properly
 4. Enjoy!
@@ -33,16 +43,9 @@ CommandShift is a free and open-source app that allows you to change input sourc
 * Sourceforge: https://sourceforge.net/projects/commandshift/files/
 * GitHub: https://github.com/VasylBaran/CommandShift/releases/
 
-**Latest installer checksums (MD5)**
-* ARM64: 3d5bc5abce1ffac17503955b4398e4ab
-* Intel: e0b725bf85666ef517145ce12d8da519
+**Latest CommandShift checksum (MD5)**
+* CommandShift-universal.dmg: c2fced57a7b755f237a1327941b5049e
 
-# Support 
-If you have found CommandShift useful and would like to say 'thank you' please consider supporting my endeavors. It encourages me to further support and update CommandShift as new versions of MacOS come out. 
+If you have found CommandShift useful and would like to say 'thank you' please consider supporting my endeavors. It encourages me to further improve, support and update CommandShift as new versions of MacOS come out. 
 * PayPal (one-time): https://www.paypal.com/donate/?hosted_button_id=WZAJV3PYPWUHA
 * Patreon (monthly): https://www.patreon.com/Vasyl_Baran
-
-
-I'm a Software engineer and Digital artist and I'm glad to be useful.
-Besides CommandShift I also have a few other projects in different mediums and even more new and exiting ideas. 
-Subscribe to me on Patreon and I'll keep you posted, I promise! ;-)
