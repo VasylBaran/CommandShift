@@ -18,7 +18,15 @@ CommandShift is a free and open-source app that allows you to change input sourc
 * Q: How to automatically launch CommandShift when computer starts?
 * A: You can add CommandShift to your list of auto-start items by opening System Settings panel -> Users and Groups OR General (depending on what version of macOS you're using) -> Login Items -> [+] -> [select CommandShift app]
 * A: I use 3+ languages and CommandShift switches only between the last 2. How to make it cycle between all 3+ languages?
-* Q: Here's a small workaround to make it work. Go to your system settings -> Keyboard shortcuts -> Input Sources and change shortcut for "Select **next source** in Input menu" to "**⌃Space**" and then either disable or change shortcut for "Select **previous source** in Input menu" to something else (otherwise there would be a conflict of shortcuts). It's a temporary workaround but it works. I plan to add a better (out-of-the-box) solution in the near future
+* Q: Press and hold second key (the one you chose from the "Change language with..." drop-down) the then press Shift multiple times in order to cycle through your languages. 
+* Q: I want to switch language after releasing Shift key instead of when pressing it
+* A: From CommandShift's menu bar at the top-right you can toggle 'Change language after Shift release'
+* Q: I want to switch language by just pressing Shift key alone
+* A: From CommandShift's menu bar go to "Change language with..." drop-down and select "Shift"
+* Q: I want to hide CommandShift icon from menu tray
+* A: From CommandShift's menu bar select "Hide icon from tray menu..." and choose whether you want to hide it "Permanently" or "Until restart"
+* Q: I have Arm/Intel based Mac. Is CommandShift going to work on both? 
+* A: Yes, CommandShift is a universal app and runs natively on both Arm and Intel Macs.
 
 # Downloads
 * Bitbucket: https://bitbucket.org/vasylbaran7/downloads/downloads/

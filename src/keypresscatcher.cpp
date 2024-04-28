@@ -2,6 +2,9 @@
 
 #include <QCoreApplication>
 #include <QTimer>
+#include <QDebug>
+
+#include <ApplicationServices/ApplicationServices.h>
 
 KeyPressCatcher::KeyPressCatcher(std::function<void (const QString& title, const QString& message)> showMessageCallback)
 : m_showMessageCallback{showMessageCallback}
@@ -17,17 +20,19 @@ KeyPressCatcher::KeyPressCatcher(std::function<void (const QString& title, const
         }
     }
 
-    auto successfullyStarted = init();
-    if (successfullyStarted != true)
+    m_successfully_started = init();
+    m_accessibility_granted = AXIsProcessTrusted();
+    if (!m_successfully_started || !m_accessibility_granted)
     {
         m_showMessageCallback(CS::setupAccessibilityTitle,
                               CS::setupAccessibilityMessage);
-        retryInit();
     }
     else
     {
         notifyAboutSuccessfulStart();
     }
+
+    loop();
 }
 
 KeyPressCatcher::~KeyPressCatcher()
@@ -65,54 +70,86 @@ void KeyPressCatcher::notifyAboutSuccessfulStart()
                           CS::allGoodMessage);
 }
 
-void KeyPressCatcher::retryInit()
+void KeyPressCatcher::setChangeLanguageOnRelease(bool change_language_on_release)
 {
-    QTimer::singleShot(1000, [this]
+    m_change_language_on_release = change_language_on_release;
+}
+
+bool KeyPressCatcher::changeLanguageOnRelease() const
+{
+    return m_change_language_on_release;
+}
+
+void KeyPressCatcher::loop()
+{
+    if (!AXIsProcessTrusted())
     {
-        auto successfullyStartedLocal = init();
-        if (successfullyStartedLocal != true)
-            retryInit();
-        else
+        if (m_accessibility_granted)
+        {
+            notifyUserAboutLostPrivileges();
+            m_accessibility_granted = false;
+        }
+    }
+    else
+    {
+        if (!m_accessibility_granted)
+        {
             notifyAboutSuccessfulStart();
-    });
+            m_accessibility_granted = true;
+        }
+    }
+
+    if (!m_successfully_started)
+    {
+        m_successfully_started = init();
+    }
+
+    QTimer::singleShot(1000, [this] { loop(); });
 }
 
 void KeyPressCatcher::sendSystemDefaultChangeLanguageShortcut()
 {
-    if (m_eventTapPtr != nullptr)
+    // Creating a 'Shift + Alt' event
+    CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
+    CGEventRef spaceDown = CGEventCreateKeyboardEvent(src, 0x31, true);
+    CGEventRef spaceUp = CGEventCreateKeyboardEvent(src, 0x31, false);
+
+    CGEventSetFlags(spaceDown, kCGEventFlagMaskAlternate);
+    CGEventSetFlags(spaceUp, kCGEventFlagMaskAlternate);
+    CGEventSetFlags(spaceDown, kCGEventFlagMaskControl);
+    CGEventSetFlags(spaceUp, kCGEventFlagMaskControl);
+
+    CGEventTapLocation loc = kCGHIDEventTap;
+
+    CGEventPost(loc, spaceDown);
+    CGEventPost(loc, spaceUp);
+
+    CFRelease(src);
+    CFRelease(spaceDown);
+    CFRelease(spaceUp);
+}
+
+void KeyPressCatcher::handleModifierKeysStatusChange(bool shift_pressed_down, bool second_key_pressed_down)
+{
+    if (m_change_language_on_release)
     {
-        CGEventTapEnable(m_eventTapPtr, false);
-        CFRelease(m_eventTapPtr);
-        m_eventTapPtr = nullptr;
+        if (shift_pressed_down && second_key_pressed_down)
+        {
+            m_pending = true;
+        }
+        else if (!shift_pressed_down && m_pending)
+        {
+            sendSystemDefaultChangeLanguageShortcut();
+            m_pending = false;
+        }
     }
-
-    // We lost our privileges (i.e. user removed CommandShift from Accessibility list)
-    // TODO: is this overkill to do this just to handle the case when we were removed from Accessibility list?
-    if (init() != true)
+    else
     {
-        notifyUserAboutLostPrivileges();
-        retryInit();
-        return;
+        if (shift_pressed_down && second_key_pressed_down)
+        {
+            sendSystemDefaultChangeLanguageShortcut();
+        }
     }
-
-   // Creating a 'Shift + Alt' event
-   CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-   CGEventRef spaceDown = CGEventCreateKeyboardEvent(src, 0x31, true);
-   CGEventRef spaceUp = CGEventCreateKeyboardEvent(src, 0x31, false);
-
-   CGEventSetFlags(spaceDown, kCGEventFlagMaskAlternate);
-   CGEventSetFlags(spaceUp, kCGEventFlagMaskAlternate);
-   CGEventSetFlags(spaceDown, kCGEventFlagMaskControl);
-   CGEventSetFlags(spaceUp, kCGEventFlagMaskControl);
-
-   CGEventTapLocation loc = kCGHIDEventTap;
-
-   CGEventPost(loc, spaceDown);
-   CGEventPost(loc, spaceUp);
-
-   CFRelease(src);
-   CFRelease(spaceDown);
-   CFRelease(spaceUp);
 }
 
 bool KeyPressCatcher::init()
@@ -122,23 +159,19 @@ bool KeyPressCatcher::init()
     m_eventTapPtr = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, modifiersPressedMask,
                         [] (CGEventTapProxy, CGEventType type, CGEventRef event, void *keyPressCatcherRawPtr)
                         {            
+                           auto catcher = static_cast<KeyPressCatcher *>(keyPressCatcherRawPtr);
                            CGEventFlags flags = CGEventGetFlags(event);
-                           // If Shift was pressed
-                           if (flags & kCGEventFlagMaskShift)
-                           {
-                           // ... and if a second key that we expected (depending on configuration) was pressed
-                           auto secondTriggerKey = static_cast<KeyPressCatcher *>(keyPressCatcherRawPtr)->getSecondShortcutKey();
-                           if ((secondTriggerKey == CS::SecondShortcutKeyEnum::GlobalFN && flags & kCGEventFlagMaskSecondaryFn) ||
-                               (secondTriggerKey == CS::SecondShortcutKeyEnum::Control && flags & kCGEventFlagMaskControl) ||
-                               (secondTriggerKey == CS::SecondShortcutKeyEnum::Option && flags & kCGEventFlagMaskAlternate) ||
-                               (secondTriggerKey == CS::SecondShortcutKeyEnum::Command && flags & kCGEventFlagMaskCommand))
-                            {
-                                // ... then we change the language
-                                static_cast<KeyPressCatcher *>(keyPressCatcherRawPtr)->sendSystemDefaultChangeLanguageShortcut();
-                            }
-                           }
+                           auto secondTriggerKey = catcher->getSecondShortcutKey();
+                           // Checking whether a second key that we expected (depending on configuration) was pressed
+                           auto second_key_pressed_down = ((secondTriggerKey == CS::SecondShortcutKeyEnum::GlobalFN && flags & kCGEventFlagMaskSecondaryFn) ||
+                                                          (secondTriggerKey == CS::SecondShortcutKeyEnum::Control && flags & kCGEventFlagMaskControl) ||
+                                                          (secondTriggerKey == CS::SecondShortcutKeyEnum::Option && flags & kCGEventFlagMaskAlternate) ||
+                                                          (secondTriggerKey == CS::SecondShortcutKeyEnum::Command && flags & kCGEventFlagMaskCommand) ||
+                                                          (secondTriggerKey == CS::SecondShortcutKeyEnum::Nothing));
 
-                        return event;
+                           // If Shift and second key were pressed (released)
+                           catcher->handleModifierKeysStatusChange((flags & kCGEventFlagMaskShift), second_key_pressed_down);
+                           return event;
                         }, this);
 
     if (m_eventTapPtr == nullptr)

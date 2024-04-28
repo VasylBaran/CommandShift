@@ -23,6 +23,7 @@ namespace CS
     Control,
     Option,
     Command,
+    Nothing,
     _LastElem
     };
 }
