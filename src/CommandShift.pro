@@ -2,6 +2,10 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+macx {
+QMAKE_APPLE_DEVICE_ARCHS = x86_64 arm64
+}
+
 CONFIG += c++11
 
 ICON = icons\icon.icns
@@ -19,6 +23,11 @@ HEADERS += \
     keypresscatcher.h
 
 LIBS += -framework ApplicationServices
+
+# Use custom Info.plist
+macx {
+    QMAKE_INFO_PLIST = $$PWD/Info.plist
+}
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
