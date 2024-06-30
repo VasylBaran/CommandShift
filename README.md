@@ -48,7 +48,7 @@ I'm a single software engineer from Ukraine. If you found CommandShift useful an
 * CommandShift-universal.dmg: c2fced57a7b755f237a1327941b5049e
 
 Again, if you have found CommandShift useful please consider supporting my endeavors. It encourages me to further improve, support and update CommandShift as new versions of MacOS come out:
-* **PayPal (one-time):** [https://www.paypal.com/donate/?hosted_button_id=WZAJV3PYPWUHA](https://www.paypal.com/donate/?business=D44S767JVTAP8&no_recurring=0&item_name=Thank+you+for+your+support%2C+it+is+much+appreciated%21&currency_code=USD)
+* **Buy Me a Coffee (Stripe) (one-time):** https://buymeacoffee.com/vasylbaran
 * **Patreon (monthly):** https://www.patreon.com/Vasyl_Baran
 
 And remember, stay Safe and stay Strong! 🇺🇦
