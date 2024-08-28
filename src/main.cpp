@@ -2,27 +2,37 @@
 
 #include "constants.h"
 
-#include <QApplication>
-#include <QSystemTrayIcon>
-#include <QMenu>
-#include <QDesktopServices>
-#include <QUrl>
 #include <QActionGroup>
+#include <QApplication>
+#include <QDesktopServices>
+#include <QMenu>
 #include <QSettings>
+#include <QStandardPaths>
+#include <QSystemTrayIcon>
+#include <QUrl>
+
+#include <filesystem>
+
 
 namespace
 {
     constexpr static auto s_hide_tray_icon_setting_name = "tray_icon/hide";
     constexpr static auto s_change_language_on_release_setting_name = "language/trigger_on_key_release";
+    constexpr static auto s_white_tray_icon_preference_setting_name = "tray_icon/white_tray_icon";
 }
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     QMenu menu;
-    auto settings = new QSettings(&a);
 
-    auto systemTrayIcon = new QSystemTrayIcon(QIcon(":/icons/trayicon.png"), &menu);
+    auto homePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    auto settingsPath = std::filesystem::path(homePath.toStdString()) / ".config" / "commandShift.ini";
+    auto settings = new QSettings(QString::fromStdString(settingsPath.string()), QSettings::Format::IniFormat, &a);
+
+    auto prefer_white_tray_icon = settings->value(s_white_tray_icon_preference_setting_name, false).toBool();
+    auto systemTrayIcon = new QSystemTrayIcon(prefer_white_tray_icon ? QIcon(":/icons/trayicon_white.png") : QIcon(":/icons/trayicon.png"), &menu);
+
     systemTrayIcon->setContextMenu(&menu);
     systemTrayIcon->setToolTip("CommandShift (1.0) - developed by Vasyl Baran");
 
@@ -108,21 +118,26 @@ int main(int argc, char *argv[])
     changeLanguageOnKeyReleasedAction->setChecked(change_language_on_release);
     QObject::connect(changeLanguageOnKeyReleasedAction, &QAction::triggered, changeLanguageOnKeyReleasedAction, [&catcher, settings] { catcher.setChangeLanguageOnRelease(!catcher.changeLanguageOnRelease()); settings->setValue(s_change_language_on_release_setting_name, catcher.changeLanguageOnRelease()); });
 
-    auto hideTrayIconGroup = new QActionGroup(&menu);
-    hideTrayIconGroup->setExclusive(true);
+    auto trayIconGroup = new QActionGroup(&menu);
+    trayIconGroup->setExclusive(false);
 
-    auto hideTrayIconActionPermanently = new QAction("Permanently", hideTrayIconGroup);
+    auto hideTrayIconActionPermanently = new QAction("Hide icon permanently", trayIconGroup);
     hideTrayIconActionPermanently->setCheckable(true);
-    auto hideTrayIconActionUtilRestart = new QAction("Until restart", hideTrayIconGroup);
+    auto hideTrayIconActionUtilRestart = new QAction("Hide icon until restart", trayIconGroup);
     hideTrayIconActionUtilRestart->setCheckable(true);
+    auto changeIconsColor = new QAction("Make it white", trayIconGroup);
+    changeIconsColor->setCheckable(true);
+    changeIconsColor->setChecked(prefer_white_tray_icon);
 
     // Adding actions to (hide tray icon) drop-down menu
-    auto hideIconFromTrayMenuDropDownActionMenu = menu.addMenu("Hide icon from tray menu...");
-    hideIconFromTrayMenuDropDownActionMenu->addAction(hideTrayIconActionPermanently);
-    hideIconFromTrayMenuDropDownActionMenu->addAction(hideTrayIconActionUtilRestart);
+    auto trayMenuIconDropDownActionMenu = menu.addMenu("Tray menu icon...");
+    trayMenuIconDropDownActionMenu->addAction(hideTrayIconActionPermanently);
+    trayMenuIconDropDownActionMenu->addAction(hideTrayIconActionUtilRestart);
+    trayMenuIconDropDownActionMenu->addAction(changeIconsColor);
 
     QObject::connect(hideTrayIconActionPermanently, &QAction::triggered, systemTrayIcon, [systemTrayIcon, settings] { systemTrayIcon->hide(); settings->setValue(s_hide_tray_icon_setting_name, true); });
-    QObject::connect(hideTrayIconActionUtilRestart, &QAction::triggered, systemTrayIcon, [systemTrayIcon, settings] { systemTrayIcon->hide(); });
+    QObject::connect(hideTrayIconActionUtilRestart, &QAction::triggered, systemTrayIcon, [systemTrayIcon] { systemTrayIcon->hide(); });
+    QObject::connect(changeIconsColor, &QAction::triggered, systemTrayIcon, [systemTrayIcon, settings] (bool checked) { systemTrayIcon->setIcon(checked ? QIcon(":/icons/trayicon_white.png") : QIcon(":/icons/trayicon.png")); settings->setValue(s_white_tray_icon_preference_setting_name, checked); });
 
     auto quitAction = menu.addAction("Quit");
     QObject::connect(quitAction, &QAction::triggered, &a, [&a] { a.quit(); });
