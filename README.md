@@ -52,3 +52,7 @@ Again, if you have found CommandShift useful please consider supporting my endea
 * **Patreon (monthly):** https://www.patreon.com/Vasyl_Baran
 
 And remember, stay Safe and stay Strong! 🇺🇦
+
+# Build
+`/opt/homebrew/opt/qt@5/bin/qmake -config release src/CommandShift.pro
+make clean && make -j8`

@@ -5,6 +5,7 @@
 #include <QDebug>
 
 #include <ApplicationServices/ApplicationServices.h>
+#include <Carbon/Carbon.h>
 
 KeyPressCatcher::KeyPressCatcher(std::function<void (const QString& title, const QString& message)> showMessageCallback)
 : m_showMessageCallback{showMessageCallback}
@@ -109,24 +110,63 @@ void KeyPressCatcher::loop()
 
 void KeyPressCatcher::sendSystemDefaultChangeLanguageShortcut()
 {
-    // Creating a 'Shift + Alt' event
-    CGEventSourceRef src = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-    CGEventRef spaceDown = CGEventCreateKeyboardEvent(src, 0x31, true);
-    CGEventRef spaceUp = CGEventCreateKeyboardEvent(src, 0x31, false);
+    // Current keyboard input source
+    TISInputSourceRef current = TISCopyCurrentKeyboardInputSource();
 
-    CGEventSetFlags(spaceDown, kCGEventFlagMaskAlternate);
-    CGEventSetFlags(spaceUp, kCGEventFlagMaskAlternate);
-    CGEventSetFlags(spaceDown, kCGEventFlagMaskControl);
-    CGEventSetFlags(spaceUp, kCGEventFlagMaskControl);
+    // Build a list of enabled, selectable keyboard input sources
+    const void* keys[] = {
+        kTISPropertyInputSourceCategory,
+        kTISPropertyInputSourceIsEnabled,
+        kTISPropertyInputSourceIsSelectCapable
+    };
+    const void* values[] = {
+        kTISCategoryKeyboardInputSource,
+        kCFBooleanTrue,
+        kCFBooleanTrue
+    };
 
-    CGEventTapLocation loc = kCGHIDEventTap;
+    CFDictionaryRef filter = CFDictionaryCreate(kCFAllocatorDefault,
+                                                keys,
+                                                values,
+                                                3,
+                                                &kCFTypeDictionaryKeyCallBacks,
+                                                &kCFTypeDictionaryValueCallBacks);
 
-    CGEventPost(loc, spaceDown);
-    CGEventPost(loc, spaceUp);
+    CFArrayRef sources = TISCreateInputSourceList(filter, false);
+    if (filter) CFRelease(filter);
 
-    CFRelease(src);
-    CFRelease(spaceDown);
-    CFRelease(spaceUp);
+    if (!sources) {
+        if (current) CFRelease(current);
+        return;
+    }
+
+    CFIndex count = CFArrayGetCount(sources);
+    if (count <= 0) {
+        CFRelease(sources);
+        if (current) CFRelease(current);
+        return;
+    }
+
+    // Find the current index
+    CFIndex currentIndex = -1;
+    for (CFIndex i = 0; i < count; ++i) {
+        TISInputSourceRef s = (TISInputSourceRef)CFArrayGetValueAtIndex(sources, i);
+        if (current && CFEqual(s, current)) {
+            currentIndex = i;
+            break;
+        }
+    }
+
+    // Compute next index (wrap-around). If current not found, pick index 0.
+    CFIndex nextIndex = (currentIndex >= 0) ? ((currentIndex + 1) % count) : 0;
+    TISInputSourceRef next = (TISInputSourceRef)CFArrayGetValueAtIndex(sources, nextIndex);
+
+    if (next) {
+        TISSelectInputSource(next);
+    }
+
+    CFRelease(sources);
+    if (current) CFRelease(current);
 }
 
 void KeyPressCatcher::handleModifierKeysStatusChange(bool shift_pressed_down, bool second_key_pressed_down)
@@ -158,7 +198,8 @@ bool KeyPressCatcher::init()
 
     m_eventTapPtr = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, modifiersPressedMask,
                         [] (CGEventTapProxy, CGEventType type, CGEventRef event, void *keyPressCatcherRawPtr)
-                        {            
+                        {
+                           (void)type; // silence unused parameter warning
                            auto catcher = static_cast<KeyPressCatcher *>(keyPressCatcherRawPtr);
                            CGEventFlags flags = CGEventGetFlags(event);
                            auto secondTriggerKey = catcher->getSecondShortcutKey();
