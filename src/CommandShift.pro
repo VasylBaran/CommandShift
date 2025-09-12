@@ -3,12 +3,13 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 macx {
-QMAKE_APPLE_DEVICE_ARCHS = x86_64 arm64
+QMAKE_APPLE_DEVICE_ARCHS = arm64
+QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.15
 }
 
-CONFIG += c++11
+CONFIG += c++17
 
-ICON = icons\icon.icns
+ICON = icons/icon.icns
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -36,3 +37,4 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     app_resources.qrc
+
