@@ -23,7 +23,7 @@ HEADERS += \
     constants.h \
     keypresscatcher.h
 
-LIBS += -framework ApplicationServices
+LIBS += -framework ApplicationServices -framework Carbon
 
 # Use custom Info.plist
 macx {
