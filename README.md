@@ -20,6 +20,8 @@ I'm a single software engineer from Ukraine. If you found CommandShift useful an
 5. (optionally) Add CommandShift to your startup items ("Users & Groups -> Login Items")
 
 # FAQ:
+* **Q:** I've upgraded to macOS Tahoe and now language input source changes by itself
+* **A:** Try CommandShift v1.05 ;-)
 * **Q:** I've added CommandShift to "Security & Privacy -> Privacy -> Accessibility" but it doesn't work =(
 * **A:** Please make sure that your settings in "Keyboard -> Shortcuts -> Input Sources" are set to default (you can easily do that by pressing "Restore Defaults" button there)
 * **Q:** How do I choose which shortcut should switch language?
@@ -40,12 +42,11 @@ I'm a single software engineer from Ukraine. If you found CommandShift useful an
 * **A:** Yes, CommandShift is a universal app and runs natively on both Arm and Intel Macs.
 
 # Downloads
-* Bitbucket: https://bitbucket.org/vasylbaran7/downloads/downloads/
 * Sourceforge: https://sourceforge.net/projects/commandshift/files/
 * GitHub: https://github.com/VasylBaran/CommandShift/releases/
 
-**Latest CommandShift checksum (MD5)**
-* CommandShift-universal.dmg: c2fced57a7b755f237a1327941b5049e
+**Latest (v1.05) CommandShift checksum (MD5)**
+* CommandShift-universal.dmg: 4f27a503617766b62a8874a1a2edaa6f
 
 Again, if you have found CommandShift useful please consider supporting my endeavors. It encourages me to further improve, support and update CommandShift as new versions of MacOS come out:
 * **Buy Me a Coffee (Stripe) (one-time):** https://buymeacoffee.com/vasylbaran
