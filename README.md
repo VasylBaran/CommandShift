@@ -8,37 +8,54 @@ After a while a friend of mine bought his first Macbook and asked me "How can I 
 CommandShift is a free and open-source app that allows you to change input source using Windows-style shortcut (e.g. Command + Shift, Option + Shift, Control + Shift, Fn + Shift or even just Shift. It's quite customizable). 
 By default MacOS doesn't support shortcuts that consist of modifier keys only. CommandShift solves this problem.
 
-# Support 
-I'm a single software engineer from Ukraine. If you found CommandShift useful and would like to say 'thank you' please consider supporting me on [Patreon](https://www.patreon.com/Vasyl_Baran) or [PayPal](https://www.paypal.com/donate/?hosted_button_id=WZAJV3PYPWUHA). It encourages me to further improve, support and update CommandShift as new versions of MacOS come out. 
+# Why Input Monitoring permission is required
+CommandShift listens for the selected modifier-key combination even when another app is focused. MacOS requires Input Monitoring permission to observe these global keyboard events.
+CommandShift uses this permission only to detect modifier-only shortcuts.
 
-**My current goal is $99 which is a membership fee for Apple Developer program** so that I can propertly sign and notarize CommandShift using Apple developer certificate.
+# Support
+I'm a single software engineer from Ukraine. If you found CommandShift useful and would like to say 'thank you' please consider supporting me on [Patreon](https://www.patreon.com/Vasyl_Baran) or [PayPal](https://www.paypal.com/donate/?hosted_button_id=WZAJV3PYPWUHA). It encourages me to further improve, support and update CommandShift as new versions of MacOS come out.
+
 # How-to use
 1. Download CommandShift-universal.dmg
 2. Drag'n'drop CommandShift application from dmg-file to your Applications folder
-3. Add CommandShift to "Security & Privacy -> Privacy -> Accessibility" in order for it to work properly
+3. Allow CommandShift in "Privacy & Security -> Input Monitoring" when prompted
 4. Enjoy!
-5. (optionally) Add CommandShift to your startup items ("Users & Groups -> Login Items")
+5. (optionally) Add CommandShift to your startup items ("General -> Login Items" on newer MacOS versions or "Users & Groups -> Login Items" on older versions)
+
+# Build from source
+CommandShift is a native MacOS application built using CMake and Xcode:
+
+```bash
+cmake -S . -B build -G Xcode
+open build/CommandShift.xcodeproj
+```
+
+The generated project builds a universal app for Arm and Intel Macs and supports MacOS 10.15+.
 
 # FAQ:
 * **Q:** I've upgraded to macOS Tahoe and now language input source changes by itself
-* **A:** Try CommandShift v1.05 ;-)
-* **Q:** I've added CommandShift to "Security & Privacy -> Privacy -> Accessibility" but it doesn't work =(
-* **A:** Please make sure that your settings in "Keyboard -> Shortcuts -> Input Sources" are set to default (you can easily do that by pressing "Restore Defaults" button there)
+* **A:** Try CommandShift v1.06 ;-)
+* **Q:** I've enabled CommandShift in "Privacy & Security -> Input Monitoring" but it doesn't work =(
+* **A:** If MacOS asks you to restart CommandShift after granting permission, quit and reopen the app
+* **Q:** Do my settings in "Keyboard -> Shortcuts -> Input Sources" need to use the default shortcut?
+* **A:** No. CommandShift now selects the next enabled input source directly using the public MacOS Text Input Source APIs
 * **Q:** How do I choose which shortcut should switch language?
 * **A:** Find CommandShift ('CS' icon) in menu bar at the top-right and click on it, there you'll find "Change language with..." drop-down. Select the one you prefer =) 
 * **Q:** I get "CommandShift is damaged and can't be opened" error
 * **A:** Please run this command in Terminal: _xattr -cr /Applications/CommandShift.app_
 * **Q:** How to automatically launch CommandShift when computer starts?
 * **A:** You can add CommandShift to your list of auto-start items by opening System Settings panel -> Users and Groups OR General (depending on what version of macOS you're using) -> Login Items -> [+] -> [select CommandShift app]
-* **A:** I use 3+ languages and CommandShift switches only between the last 2. How to make it cycle between all 3+ languages?
-* **Q:** Press and hold second key (the one you chose from the "Change language with..." drop-down) the then press Shift multiple times in order to cycle through your languages. 
+* **Q:** I use 3+ languages. Can CommandShift cycle through all of them?
+* **A:** Yes, CommandShift cycles through all currently enabled input sources
 * **Q:** I want to switch language after releasing Shift key instead of when pressing it
 * **A:** From CommandShift's menu bar at the top-right you can toggle 'Change language after Shift release'
 * **Q:** I want to switch language by just pressing Shift key alone
 * **A:** From CommandShift's menu bar go to "Change language with..." drop-down and select "Shift"
 * **Q:** I want to hide CommandShift icon from menu tray
-* **A:** From CommandShift's menu bar select "Hide icon from tray menu..." and choose whether you want to hide it "Permanently" or "Until restart"
-* **Q:** I have Arm/Intel based Mac. Is CommandShift going to work on both? 
+* **A:** From CommandShift's menu bar select "Hide this from menu bar..." and choose whether you want to hide it "permanently" or "until restart"
+* **Q:** I hid the CommandShift icon permanently but changed my mind. How do I make it visible again?
+* **A:** Run `killall CommandShift; defaults write vasybaran.loveFromUkraine.CommandShift "tray_icon/hide" -bool false; open -a CommandShift` in Terminal
+* **Q:** I have Arm/Intel based Mac. Is CommandShift going to work on both?
 * **A:** Yes, CommandShift is a universal app and runs natively on both Arm and Intel Macs.
 
 # Downloads

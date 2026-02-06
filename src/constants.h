@@ -1,30 +1,28 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#include <QString>
-
 namespace CS
 {
-    static const auto setupAccessibilityTitle = QString("One more thing...");
-    static const auto setupAccessibilityMessage = QString("Please add CommandShift to \"Security & Privacy -> Privacy -> Accessibility\" in order for it to work properly");
+    static constexpr const char* setupInputMonitoringTitle = "Input Monitoring required";
+    static constexpr const char* setupInputMonitoringMessage = "Allow CommandShift to receive keystrokes from other apps so it can detect modifier-only shortcuts and switch input sources. ";
 
-    static const auto allGoodTitle = QString("CommandShift is now up and running");
-    static const auto allGoodMessage = QString("Thank you for using my app! — Vasyl Baran, developer.");
+    static constexpr const char* allGoodTitle = "CommandShift is now up and running";
+    static constexpr const char* allGoodMessage = "Thank you for using my app! — Vasyl Baran, developer.";
 
-    static const auto privilegesLostTitle = QString("CommandShift will no longer work... =(");
-    static const auto privilegesLostMessage = QString("Unfortunately it seems that CommandShift has been removed from \"Security & Privacy -> Privacy -> Accessibility\" list");
+    static constexpr const char* inputMonitoringLostTitle = "Input Monitoring was removed";
+    static constexpr const char* inputMonitoringLostMessage = "CommandShift cannot detect modifier-only shortcuts until Input Monitoring is enabled again. ";
 
-    static const auto secondShortcutKeySettingKeyword = QString("SecondShortcutKey");
+    static constexpr const char* secondShortcutKeySettingKeyword = "SecondShortcutKey";
 
     enum SecondShortcutKeyEnum
     {
-    _FirstElem = 0,
-    GlobalFN,
-    Control,
-    Option,
-    Command,
-    Nothing,
-    _LastElem
+        _FirstElem = 0,
+        GlobalFN,
+        Control,
+        Option,
+        Command,
+        Nothing,
+        _LastElem
     };
 }
 

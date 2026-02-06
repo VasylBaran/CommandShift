@@ -8,16 +8,26 @@
 	<string>en</string>
 	<key>CFBundleExecutable</key>
 	<string>CommandShift</string>
+	<key>CFBundleDisplayName</key>
+	<string>CommandShift</string>
+	<key>CFBundleName</key>
+	<string>CommandShift</string>
 	<key>CFBundleIconFile</key>
-	<string>icon.icns</string>
+	<string>icon_white.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>vasybaran.loveFromUkraine.CommandShift</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.06</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>11.0</string>
+	<string>10.15</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
 	<key>LSUIElement</key>
 	<string>1</string>
 	<key>NSPrincipalClass</key>
