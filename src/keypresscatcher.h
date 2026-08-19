@@ -13,7 +13,8 @@
 class KeyPressCatcher
 {
 public:
-    KeyPressCatcher(std::function<void (const QString& title, const QString& message)> showMessageCallback);
+    KeyPressCatcher(QSettings& settings,
+                    std::function<void (const QString& title, const QString& message)> showMessageCallback);
     ~KeyPressCatcher();
 
     void setSecondShortcutKey(CS::SecondShortcutKeyEnum keyValue);
@@ -24,6 +25,9 @@ public:
 
 private:
     bool init();
+
+    // Move the shortcut preference out of the location older versions wrote it to
+    void migrateSecondShortcutKeyFromLegacySettings();
 
     // Notify user that we've started successfully
     void notifyAboutSuccessfulStart();
@@ -46,7 +50,7 @@ private:
 
     std::function<void (const QString& title, const QString& message)> m_showMessageCallback;
     __CFMachPort*                                                      m_eventTapPtr = nullptr;
-    QSettings                                                          m_settings;
+    QSettings&                                                         m_settings;
     bool                                                               m_successfully_started = false;
     bool                                                               m_accessibility_granted = false;
     bool                                                               m_change_language_on_release = false;

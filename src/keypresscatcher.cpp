@@ -156,9 +156,13 @@ namespace
     }
 }
 
-KeyPressCatcher::KeyPressCatcher(std::function<void (const QString& title, const QString& message)> showMessageCallback)
+KeyPressCatcher::KeyPressCatcher(QSettings& settings,
+                                 std::function<void (const QString& title, const QString& message)> showMessageCallback)
 : m_showMessageCallback{showMessageCallback}
-{    
+, m_settings{settings}
+{
+    migrateSecondShortcutKeyFromLegacySettings();
+
     auto secondShortcutKeyQVariant = m_settings.value(CS::secondShortcutKeySettingKeyword);
     if (!secondShortcutKeyQVariant.isNull())
     {
@@ -189,9 +193,6 @@ KeyPressCatcher::KeyPressCatcher(std::function<void (const QString& title, const
 
 KeyPressCatcher::~KeyPressCatcher()
 {
-    // Saving user preference
-    m_settings.setValue(CS::secondShortcutKeySettingKeyword, m_secondShortcutKey);
-
     stopObservingInputSource();
 
     if (m_eventTapPtr != nullptr)
@@ -205,6 +206,30 @@ void KeyPressCatcher::setSecondShortcutKey(CS::SecondShortcutKeyEnum keyValue)
 {
     qDebug() << "set secondary key to" << keyValue;
     m_secondShortcutKey = keyValue;
+    // Persist straight away rather than on shutdown: the app is usually killed at
+    // logout rather than quit, and the choice was being lost when that happened.
+    m_settings.setValue(CS::secondShortcutKeySettingKeyword, m_secondShortcutKey);
+}
+
+void KeyPressCatcher::migrateSecondShortcutKeyFromLegacySettings()
+{
+    if (m_settings.contains(CS::secondShortcutKeySettingKeyword))
+    {
+        return;
+    }
+
+    // This preference used to be written through a default-constructed QSettings, which
+    // lands in the application's own domain rather than in commandShift.ini with every
+    // other setting. Constructing one the same way finds it wherever it ended up.
+    QSettings legacySettings;
+    auto legacyValue = legacySettings.value(CS::secondShortcutKeySettingKeyword);
+    if (legacyValue.isNull())
+    {
+        return;
+    }
+
+    m_settings.setValue(CS::secondShortcutKeySettingKeyword, legacyValue);
+    legacySettings.remove(CS::secondShortcutKeySettingKeyword);
 }
 
 CS::SecondShortcutKeyEnum KeyPressCatcher::getSecondShortcutKey() const

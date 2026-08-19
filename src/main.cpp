@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
                                     30000);
     };
 
-    KeyPressCatcher catcher(showMessageCallback);
+    KeyPressCatcher catcher(*settings, showMessageCallback);
     auto authorAction = menu.addAction("Visit CommandShift page");
     QObject::connect(authorAction, &QAction::triggered, [] { QDesktopServices::openUrl(QUrl("https://github.com/VasylBaran/CommandShift")); });
 
