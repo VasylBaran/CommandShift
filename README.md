@@ -1,58 +1,120 @@
-[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://vshymanskyy.github.io/StandWithUkraine/)
-
-# Backstory
-Initially I wrote this program for myself since I bought my first Macbook and quickly realized that I can't use 'Alt'+Shift to change language on macOS. 
-After a while a friend of mine bought his first Macbook and asked me "How can I change language using 'Alt'+Shift? I can't seem to change it in system preferences". I shared my app with him and at that point I realized that other people might find it useful as well so decided to share this app with the world.
-
 # CommandShift
-CommandShift is a free and open-source app that allows you to change input source using Windows-style shortcut (e.g. Command + Shift, Option + Shift, Control + Shift, Fn + Shift or even just Shift. It's quite customizable). 
-By default MacOS doesn't support shortcuts that consist of modifier keys only. CommandShift solves this problem.
 
-# Support 
-I'm a single software engineer from Ukraine. If you found CommandShift useful and would like to say 'thank you' please consider supporting me on [Patreon](https://www.patreon.com/Vasyl_Baran) or [PayPal](https://www.paypal.com/donate/?hosted_button_id=WZAJV3PYPWUHA). It encourages me to further improve, support and update CommandShift as new versions of MacOS come out. 
+CommandShift is a free and open-source macOS app that lets you change input source
+with a Windows-style shortcut made of modifier keys only — Command + Shift,
+Option + Shift, Control + Shift, Fn + Shift, or even Shift on its own. macOS does not
+support modifier-only shortcuts by itself; CommandShift adds them.
 
-**My current goal is $99 which is a membership fee for Apple Developer program** so that I can propertly sign and notarize CommandShift using Apple developer certificate.
-# How-to use
-1. Download CommandShift-universal.dmg
-2. Drag'n'drop CommandShift application from dmg-file to your Applications folder
-3. Add CommandShift to "Security & Privacy -> Privacy -> Accessibility" in order for it to work properly
-4. Enjoy!
-5. (optionally) Add CommandShift to your startup items ("Users & Groups -> Login Items")
+## About this fork
 
-# FAQ:
-* **Q:** I've added CommandShift to "Security & Privacy -> Privacy -> Accessibility" but it doesn't work =(
-* **A:** Please make sure that your settings in "Keyboard -> Shortcuts -> Input Sources" are set to default (you can easily do that by pressing "Restore Defaults" button there)
+The original CommandShift was written by **Vasyl Baran** and lives at
+[VasylBaran/CommandShift](https://github.com/VasylBaran/CommandShift). All the credit
+for the application belongs to him — this is a fork that builds on his work, kept for
+personal use, and it remains under the same GPL-3.0 license.
+
+What this fork changes:
+
+* **No dependency on macOS' own input-source shortcut.** The original simulated a
+  Ctrl+Space keystroke and relied on that binding still being in place, which meant
+  giving up Ctrl+Space — the autocomplete shortcut in most IDEs. This fork asks Text
+  Input Services to change the source directly, so no system shortcut needs to stay
+  bound, and switching is immediate rather than going through the system's hotkey
+  machinery.
+* **Other shortcuts are left alone.** The language only changes when the shortcut's
+  modifiers are pressed and released on their own. Press another key, click or scroll
+  while holding them and CommandShift stays out of the way, so Cmd+Shift+A still does
+  what the app under it expects. In Shift-only mode this also means typing capital
+  letters no longer switches the layout.
+* **Switching returns to the previously used input source**, the way Alt+Tab returns
+  you to your last window, including when you changed source from the menu bar.
+* **One settings file.** Every preference now lives in `~/.config/commandShift.ini`.
+* **A build script**, so the app can be built, signed and installed in one command.
+
+Because switching now has to distinguish a language change from the start of another
+shortcut, it happens when the keys are released rather than when they are pressed.
+
+## Installing
+
+This fork has no prebuilt releases — build it from source with the instructions below.
+Vasyl's original builds are available from
+[his releases page](https://github.com/VasylBaran/CommandShift/releases/), but they
+predate everything listed above.
+
+Once installed:
+
+1. Add CommandShift to "Privacy & Security -> Accessibility" so it can see key presses.
+2. (optionally) Add CommandShift to your login items ("General -> Login Items").
+
+## FAQ
+
+* **Q:** I've added CommandShift to "Privacy & Security -> Accessibility" but it doesn't work =(
+* **A:** Check that you have at least two input sources enabled in "Keyboard -> Text Input -> Input Sources", and that the switch next to CommandShift is actually turned on (adding the app to the list is not enough). If you have just replaced the app with a newer version, remove the old entry with the "-" button and add it again.
+* **Q:** Do I need to keep macOS' own "Select the previous input source" shortcut (Ctrl+Space) bound?
+* **A:** No. CommandShift changes the input source directly, so you are free to unbind Ctrl+Space in "Keyboard -> Keyboard Shortcuts -> Input Sources" and use it for something else.
+* **Q:** Does CommandShift interfere with shortcuts like Cmd+Shift+A?
+* **A:** No. If you press any other key, or click or scroll, while holding the modifiers, CommandShift leaves that shortcut alone and does not change the language. This is also why the language changes when you release the keys rather than when you press them: until you let go, there is no way to tell a language switch from the start of another shortcut.
 * **Q:** How do I choose which shortcut should switch language?
-* **A:** Find CommandShift ('CS' icon) in menu bar at the top-right and click on it, there you'll find "Change language with..." drop-down. Select the one you prefer =) 
-* **Q:** I get "CommandShift is damaged and can't be opened" error
-* **A:** Please run this command in Terminal: _xattr -cr /Applications/CommandShift.app_
-* **Q:** How to automatically launch CommandShift when computer starts?
-* **A:** You can add CommandShift to your list of auto-start items by opening System Settings panel -> Users and Groups OR General (depending on what version of macOS you're using) -> Login Items -> [+] -> [select CommandShift app]
-* **A:** I use 3+ languages and CommandShift switches only between the last 2. How to make it cycle between all 3+ languages?
-* **Q:** Press and hold second key (the one you chose from the "Change language with..." drop-down) the then press Shift multiple times in order to cycle through your languages. 
-* **Q:** I want to switch language after releasing Shift key instead of when pressing it
-* **A:** From CommandShift's menu bar at the top-right you can toggle 'Change language after Shift release'
-* **Q:** I want to switch language by just pressing Shift key alone
-* **A:** From CommandShift's menu bar go to "Change language with..." drop-down and select "Shift"
-* **Q:** I want to hide CommandShift icon from menu tray
-* **A:** From CommandShift's menu bar select "Hide icon from tray menu..." and choose whether you want to hide it "Permanently" or "Until restart"
-* **Q:** I have Arm/Intel based Mac. Is CommandShift going to work on both? 
-* **A:** Yes, CommandShift is a universal app and runs natively on both Arm and Intel Macs.
+* **A:** Find CommandShift ('CS' icon) in the menu bar at the top-right and click on it, there you'll find a "Change language with..." drop-down. Select the one you prefer.
+* **Q:** I use 3+ languages. Which one does CommandShift switch to?
+* **A:** The one you used before the current one, the same way Alt+Tab returns you to your last window. To reach a third language, pick it once from the input menu in the menu bar; CommandShift will then switch between that one and whichever you came from.
+* **Q:** I want to switch language by just pressing the Shift key alone
+* **A:** From CommandShift's menu bar go to the "Change language with..." drop-down and select "Shift". Typing capital letters will not switch anything, since Shift is then being held together with another key.
+* **Q:** I want to hide the CommandShift icon from the menu bar
+* **A:** From CommandShift's menu select "Tray menu icon..." and choose whether to hide it "permanently" or "until restart".
+* **Q:** How do I automatically launch CommandShift when the computer starts?
+* **A:** Add it to your login items: System Settings -> General -> Login Items -> [+] -> [select CommandShift].
+* **Q:** I get a "CommandShift is damaged and can't be opened" error
+* **A:** Run this in Terminal: `xattr -cr /Applications/CommandShift.app`
 
-# Downloads
-* Bitbucket: https://bitbucket.org/vasylbaran7/downloads/downloads/
-* Sourceforge: https://sourceforge.net/projects/commandshift/files/
-* GitHub: https://github.com/VasylBaran/CommandShift/releases/
+## Building from source (macOS)
 
-**Latest CommandShift checksum (MD5)**
-* CommandShift-universal.dmg: c2fced57a7b755f237a1327941b5049e
+### One-time setup
 
-Again, if you have found CommandShift useful please consider supporting my endeavors. It encourages me to further improve, support and update CommandShift as new versions of MacOS come out:
-* **Buy Me a Coffee (Stripe) (one-time):** https://buymeacoffee.com/vasylbaran
-* **Patreon (monthly):** https://www.patreon.com/Vasyl_Baran
+1. Xcode Command Line Tools:
 
-And remember, stay Safe and stay Strong! 🇺🇦
+   ```
+   xcode-select --install
+   ```
 
-# Build
-`/opt/homebrew/opt/qt@5/bin/qmake -config release src/CommandShift.pro
-make clean && make -j8`
+2. Qt 6:
+
+   ```
+   brew install qt
+   ```
+
+3. A code-signing identity. CommandShift needs Accessibility permission, and macOS ties
+   that permission to the code signature. Without a stable signing identity you have to
+   re-grant Accessibility after *every* rebuild. Creating a self-signed certificate once
+   avoids that:
+
+   ```
+   openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+     -keyout key.pem -out cert.pem -subj "/CN=CommandShift Dev" \
+     -addext "basicConstraints=critical,CA:false" \
+     -addext "keyUsage=critical,digitalSignature" \
+     -addext "extendedKeyUsage=critical,codeSigning"
+   openssl pkcs12 -export -inkey key.pem -in cert.pem -out identity.p12 \
+     -passout pass:csdev -name "CommandShift Dev"
+   security import identity.p12 -k ~/Library/Keychains/login.keychain-db \
+     -P csdev -T /usr/bin/codesign
+   security add-trusted-cert -r trustRoot -p codeSign \
+     -k ~/Library/Keychains/login.keychain-db cert.pem
+   ```
+
+   Verify with `security find-identity -v -p codesigning`.
+
+### Build
+
+```
+./build.sh            # build + sign into ./build/CommandShift.app
+./build.sh install    # ...and replace /Applications/CommandShift.app, then launch
+```
+
+Override the defaults with `QT_PREFIX` and `CS_SIGN_IDENTITY` if needed.
+
+Note: a Homebrew Qt build is arm64-only and targets macOS 14+. Use the official Qt
+installer if you need a universal binary or a lower deployment target.
+
+## License
+
+GPL-3.0, inherited from the original project. See [LICENSE](LICENSE).

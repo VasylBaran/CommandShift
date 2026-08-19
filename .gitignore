@@ -1,1 +1,11 @@
 .DS_Store
+
+# Build output
+build/
+*.o
+*.app
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+Makefile
+.qmake.stash
