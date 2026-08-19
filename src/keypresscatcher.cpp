@@ -249,16 +249,6 @@ void KeyPressCatcher::notifyAboutSuccessfulStart()
                           CS::allGoodMessage);
 }
 
-void KeyPressCatcher::setChangeLanguageOnRelease(bool change_language_on_release)
-{
-    m_change_language_on_release = change_language_on_release;
-}
-
-bool KeyPressCatcher::changeLanguageOnRelease() const
-{
-    return m_change_language_on_release;
-}
-
 void KeyPressCatcher::loop()
 {
     if (!AXIsProcessTrusted())
@@ -385,34 +375,56 @@ void KeyPressCatcher::reenableEventTap()
     }
 }
 
+void KeyPressCatcher::noteUnrelatedInput()
+{
+    if (m_combo_armed)
+    {
+        m_combo_used_with_other_input = true;
+    }
+}
+
 void KeyPressCatcher::handleModifierKeysStatusChange(bool shift_pressed_down, bool second_key_pressed_down)
 {
-    if (m_change_language_on_release)
+    if (shift_pressed_down && second_key_pressed_down)
     {
-        if (shift_pressed_down && second_key_pressed_down)
+        if (!m_combo_armed)
         {
-            m_pending = true;
+            m_combo_armed = true;
+            m_combo_used_with_other_input = false;
         }
-        else if (!shift_pressed_down && m_pending)
-        {
-            requestInputSourceSwitch();
-            m_pending = false;
-        }
+        return;
     }
-    else
+
+    if (!m_combo_armed)
     {
-        if (shift_pressed_down && second_key_pressed_down)
-        {
-            requestInputSourceSwitch();
-        }
+        return;
+    }
+
+    m_combo_armed = false;
+
+    // Whether the combo was a request to change language can only be known once it is let
+    // go of: Cmd+Shift+A is somebody using a shortcut, and Shift+H is somebody typing a
+    // capital letter. Only a press of the modifiers on their own means a language change.
+    if (!m_combo_used_with_other_input)
+    {
+        requestInputSourceSwitch();
     }
 }
 
 bool KeyPressCatcher::init()
 {
-    CGEventMask modifiersPressedMask = CGEventMaskBit(kCGEventFlagsChanged);
+    // Key and mouse events are watched purely to notice that the modifiers were held as part
+    // of some other shortcut, so that we can leave that shortcut alone.
+    CGEventMask eventMask = CGEventMaskBit(kCGEventFlagsChanged)
+                          | CGEventMaskBit(kCGEventKeyDown)
+                          | CGEventMaskBit(kCGEventLeftMouseDown)
+                          | CGEventMaskBit(kCGEventRightMouseDown)
+                          | CGEventMaskBit(kCGEventOtherMouseDown)
+                          | CGEventMaskBit(kCGEventScrollWheel);
 
-    m_eventTapPtr = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, modifiersPressedMask,
+    // Listen-only, because we never modify or swallow anything. It also keeps the app out of
+    // the input latency path, which matters now that every keystroke passes through here.
+    m_eventTapPtr = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionListenOnly, eventMask,
                         [] (CGEventTapProxy, CGEventType type, CGEventRef event, void *keyPressCatcherRawPtr)
                         {
                            auto catcher = static_cast<KeyPressCatcher *>(keyPressCatcherRawPtr);
@@ -422,6 +434,12 @@ bool KeyPressCatcher::init()
                            if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput)
                            {
                                catcher->reenableEventTap();
+                               return event;
+                           }
+
+                           if (type != kCGEventFlagsChanged)
+                           {
+                               catcher->noteUnrelatedInput();
                                return event;
                            }
 

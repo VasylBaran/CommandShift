@@ -17,7 +17,6 @@
 namespace
 {
     constexpr static auto s_hide_tray_icon_setting_name = "tray_icon/hide";
-    constexpr static auto s_change_language_on_release_setting_name = "language/trigger_on_key_release";
     constexpr static auto s_white_tray_icon_preference_setting_name = "tray_icon/white_tray_icon";
 }
 
@@ -109,14 +108,6 @@ int main(int argc, char *argv[])
     secondShortcutKeyDropDownActionMenu->addAction(optionAction);
     secondShortcutKeyDropDownActionMenu->addAction(commandAction);
     secondShortcutKeyDropDownActionMenu->addAction(shiftAction);
-
-    auto change_language_on_release = settings->value(s_change_language_on_release_setting_name, false).toBool();
-    catcher.setChangeLanguageOnRelease(change_language_on_release);
-
-    auto changeLanguageOnKeyReleasedAction = menu.addAction("Change language after Shift release");
-    changeLanguageOnKeyReleasedAction->setCheckable(true);
-    changeLanguageOnKeyReleasedAction->setChecked(change_language_on_release);
-    QObject::connect(changeLanguageOnKeyReleasedAction, &QAction::triggered, changeLanguageOnKeyReleasedAction, [&catcher, settings] { catcher.setChangeLanguageOnRelease(!catcher.changeLanguageOnRelease()); settings->setValue(s_change_language_on_release_setting_name, catcher.changeLanguageOnRelease()); });
 
     auto trayIconGroup = new QActionGroup(&menu);
     trayIconGroup->setExclusive(false);

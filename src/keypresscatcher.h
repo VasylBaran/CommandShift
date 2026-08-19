@@ -20,9 +20,6 @@ public:
     void setSecondShortcutKey(CS::SecondShortcutKeyEnum keyValue);
     CS::SecondShortcutKeyEnum getSecondShortcutKey() const;
 
-    void setChangeLanguageOnRelease(bool change_language_on_release);
-    bool changeLanguageOnRelease() const;
-
 private:
     bool init();
 
@@ -45,6 +42,8 @@ private:
     void reenableEventTap();
     // Handle modifiers state change (pressed/released)
     void handleModifierKeysStatusChange(bool shift_pressed_down, bool second_key_pressed_down);
+    // Note that something other than the modifiers themselves was pressed
+    void noteUnrelatedInput();
     // Perpetual loop checking (every 1 sec) if we still have Accessibility permissions
     void loop();
 
@@ -53,8 +52,10 @@ private:
     QSettings&                                                         m_settings;
     bool                                                               m_successfully_started = false;
     bool                                                               m_accessibility_granted = false;
-    bool                                                               m_change_language_on_release = false;
-    bool                                                               m_pending = false;
+    // The shortcut's modifiers are currently held down together
+    bool                                                               m_combo_armed = false;
+    // ...and something else was pressed while they were, so this is a real shortcut
+    bool                                                               m_combo_used_with_other_input = false;
     bool                                                               m_switch_queued = false;
     bool                                                               m_observing_input_source = false;
     // Identifiers ("com.apple.keylayout.ABC" and friends) of the two most recently used sources

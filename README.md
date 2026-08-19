@@ -8,7 +8,7 @@ After a while a friend of mine bought his first Macbook and asked me "How can I 
 CommandShift is a free and open-source app that allows you to change input source using Windows-style shortcut (e.g. Command + Shift, Option + Shift, Control + Shift, Fn + Shift or even just Shift. It's quite customizable). 
 By default MacOS doesn't support shortcuts that consist of modifier keys only. CommandShift solves this problem.
 
-It changes the input source directly rather than by simulating macOS' own shortcut, so it does not require Ctrl+Space (or any other system shortcut) to stay bound, and the switch happens immediately.
+It changes the input source directly rather than by simulating macOS' own shortcut, so it does not require Ctrl+Space (or any other system shortcut) to stay bound. The language changes only when the shortcut's modifiers are pressed and released on their own, so ordinary shortcuts like Cmd+Shift+A keep working as they should.
 
 # Support 
 I'm a single software engineer from Ukraine. If you found CommandShift useful and would like to say 'thank you' please consider supporting me on [Patreon](https://www.patreon.com/Vasyl_Baran) or [PayPal](https://www.paypal.com/donate/?hosted_button_id=WZAJV3PYPWUHA). It encourages me to further improve, support and update CommandShift as new versions of MacOS come out. 
@@ -34,10 +34,10 @@ I'm a single software engineer from Ukraine. If you found CommandShift useful an
 * **A:** You can add CommandShift to your list of auto-start items by opening System Settings panel -> Users and Groups OR General (depending on what version of macOS you're using) -> Login Items -> [+] -> [select CommandShift app]
 * **Q:** I use 3+ languages. Which one does CommandShift switch to?
 * **A:** The one you used before the current one, the same way Alt+Tab returns you to your last window. To reach a third language, pick it once from the input menu in the menu bar; CommandShift will then switch between that one and whichever you came from. 
-* **Q:** I want to switch language after releasing Shift key instead of when pressing it
-* **A:** From CommandShift's menu bar at the top-right you can toggle 'Change language after Shift release'
+* **Q:** Does CommandShift interfere with shortcuts like Cmd+Shift+A?
+* **A:** No. If you press any other key, or click or scroll, while holding the modifiers, CommandShift leaves that shortcut alone and does not change the language. This is also why the language changes when you release the keys rather than when you press them: until you let go, there is no way to tell a language switch from the start of another shortcut.
 * **Q:** I want to switch language by just pressing Shift key alone
-* **A:** From CommandShift's menu bar go to "Change language with..." drop-down and select "Shift"
+* **A:** From CommandShift's menu bar go to "Change language with..." drop-down and select "Shift". Typing capital letters will not switch anything, since Shift is then being held together with another key.
 * **Q:** I want to hide CommandShift icon from menu tray
 * **A:** From CommandShift's menu bar select "Hide icon from tray menu..." and choose whether you want to hide it "Permanently" or "Until restart"
 * **Q:** I have Arm/Intel based Mac. Is CommandShift going to work on both? 
