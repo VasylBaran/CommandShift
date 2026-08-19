@@ -53,6 +53,51 @@ Again, if you have found CommandShift useful please consider supporting my endea
 
 And remember, stay Safe and stay Strong! 🇺🇦
 
-# Build
-`/opt/homebrew/opt/qt@5/bin/qmake -config release src/CommandShift.pro
-make clean && make -j8`
+# Building from source (macOS)
+
+### One-time setup
+
+1. Xcode Command Line Tools:
+
+   ```
+   xcode-select --install
+   ```
+
+2. Qt 6:
+
+   ```
+   brew install qt
+   ```
+
+3. A code-signing identity. CommandShift needs Accessibility permission, and macOS ties
+   that permission to the code signature. Without a stable signing identity you have to
+   re-grant Accessibility after *every* rebuild. Creating a self-signed certificate once
+   avoids that:
+
+   ```
+   openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+     -keyout key.pem -out cert.pem -subj "/CN=CommandShift Dev" \
+     -addext "basicConstraints=critical,CA:false" \
+     -addext "keyUsage=critical,digitalSignature" \
+     -addext "extendedKeyUsage=critical,codeSigning"
+   openssl pkcs12 -export -inkey key.pem -in cert.pem -out identity.p12 \
+     -passout pass:csdev -name "CommandShift Dev"
+   security import identity.p12 -k ~/Library/Keychains/login.keychain-db \
+     -P csdev -T /usr/bin/codesign
+   security add-trusted-cert -r trustRoot -p codeSign \
+     -k ~/Library/Keychains/login.keychain-db cert.pem
+   ```
+
+   Verify with `security find-identity -v -p codesigning`.
+
+### Build
+
+```
+./build.sh            # build + sign into ./build/CommandShift.app
+./build.sh install    # ...and replace /Applications/CommandShift.app, then launch
+```
+
+Override the defaults with `QT_PREFIX` and `CS_SIGN_IDENTITY` if needed.
+
+Note: a Homebrew Qt build is arm64-only and targets macOS 14+. Use the official Qt
+installer if you need a universal binary or a lower deployment target for distribution.
