@@ -8,6 +8,8 @@ After a while a friend of mine bought his first Macbook and asked me "How can I 
 CommandShift is a free and open-source app that allows you to change input source using Windows-style shortcut (e.g. Command + Shift, Option + Shift, Control + Shift, Fn + Shift or even just Shift. It's quite customizable). 
 By default MacOS doesn't support shortcuts that consist of modifier keys only. CommandShift solves this problem.
 
+It changes the input source directly rather than by simulating macOS' own shortcut, so it does not require Ctrl+Space (or any other system shortcut) to stay bound, and the switch happens immediately.
+
 # Support 
 I'm a single software engineer from Ukraine. If you found CommandShift useful and would like to say 'thank you' please consider supporting me on [Patreon](https://www.patreon.com/Vasyl_Baran) or [PayPal](https://www.paypal.com/donate/?hosted_button_id=WZAJV3PYPWUHA). It encourages me to further improve, support and update CommandShift as new versions of MacOS come out. 
 
@@ -21,15 +23,17 @@ I'm a single software engineer from Ukraine. If you found CommandShift useful an
 
 # FAQ:
 * **Q:** I've added CommandShift to "Security & Privacy -> Privacy -> Accessibility" but it doesn't work =(
-* **A:** Please make sure that your settings in "Keyboard -> Shortcuts -> Input Sources" are set to default (you can easily do that by pressing "Restore Defaults" button there)
+* **A:** Check that you have at least two input sources enabled in "Keyboard -> Text Input -> Input Sources", and that the switch next to CommandShift is actually turned on (adding the app to the list is not enough). If you have just replaced the app with a newer version, remove the old entry with the "-" button and add it again.
+* **Q:** Do I need to keep macOS' own "Select the previous input source" shortcut (Ctrl+Space) bound?
+* **A:** No. CommandShift changes the input source directly, so you are free to unbind Ctrl+Space in "Keyboard -> Keyboard Shortcuts -> Input Sources" and use it for something else. Older versions did depend on it.
 * **Q:** How do I choose which shortcut should switch language?
 * **A:** Find CommandShift ('CS' icon) in menu bar at the top-right and click on it, there you'll find "Change language with..." drop-down. Select the one you prefer =) 
 * **Q:** I get "CommandShift is damaged and can't be opened" error
 * **A:** Please run this command in Terminal: _xattr -cr /Applications/CommandShift.app_
 * **Q:** How to automatically launch CommandShift when computer starts?
 * **A:** You can add CommandShift to your list of auto-start items by opening System Settings panel -> Users and Groups OR General (depending on what version of macOS you're using) -> Login Items -> [+] -> [select CommandShift app]
-* **A:** I use 3+ languages and CommandShift switches only between the last 2. How to make it cycle between all 3+ languages?
-* **Q:** Press and hold second key (the one you chose from the "Change language with..." drop-down) the then press Shift multiple times in order to cycle through your languages. 
+* **Q:** I use 3+ languages. Which one does CommandShift switch to?
+* **A:** The one you used before the current one, the same way Alt+Tab returns you to your last window. To reach a third language, pick it once from the input menu in the menu bar; CommandShift will then switch between that one and whichever you came from. 
 * **Q:** I want to switch language after releasing Shift key instead of when pressing it
 * **A:** From CommandShift's menu bar at the top-right you can toggle 'Change language after Shift release'
 * **Q:** I want to switch language by just pressing Shift key alone
