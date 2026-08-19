@@ -7,6 +7,155 @@
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
 
+namespace
+{
+    // An input source's unique identifier, e.g. "com.apple.keylayout.ABC"
+    QString inputSourceID(TISInputSourceRef source)
+    {
+        if (source == nullptr)
+        {
+            return QString();
+        }
+
+        auto identifier = (CFStringRef)TISGetInputSourceProperty(source, kTISPropertyInputSourceID);
+        return (identifier != nullptr) ? QString::fromCFString(identifier) : QString();
+    }
+
+    QString currentInputSourceID()
+    {
+        TISInputSourceRef current = TISCopyCurrentKeyboardInputSource();
+        auto identifier = inputSourceID(current);
+
+        if (current != nullptr)
+        {
+            CFRelease(current);
+        }
+
+        return identifier;
+    }
+
+    // Keyboard layouts (ABC, RussianWin, ...) and input modes (Chinese, Japanese, ...) are the
+    // only things a user actually switches between. Character palettes, Press-and-Hold and other
+    // helpers also live in the "keyboard" category, so filtering on category alone is not enough.
+    bool isSwitchableKeyboardSource(TISInputSourceRef source)
+    {
+        auto type = (CFStringRef)TISGetInputSourceProperty(source, kTISPropertyInputSourceType);
+        if (type == nullptr)
+        {
+            return false;
+        }
+
+        return CFEqual(type, kTISTypeKeyboardLayout) || CFEqual(type, kTISTypeKeyboardInputMode);
+    }
+
+    // Enabled, selectable keyboard sources in the order macOS reports them. Caller owns the result.
+    CFArrayRef copySwitchableInputSources()
+    {
+        const void* keys[] = {
+            kTISPropertyInputSourceCategory,
+            kTISPropertyInputSourceIsEnabled,
+            kTISPropertyInputSourceIsSelectCapable
+        };
+        const void* values[] = {
+            kTISCategoryKeyboardInputSource,
+            kCFBooleanTrue,
+            kCFBooleanTrue
+        };
+
+        CFDictionaryRef filter = CFDictionaryCreate(kCFAllocatorDefault,
+                                                    keys,
+                                                    values,
+                                                    3,
+                                                    &kCFTypeDictionaryKeyCallBacks,
+                                                    &kCFTypeDictionaryValueCallBacks);
+        if (filter == nullptr)
+        {
+            return nullptr;
+        }
+
+        CFArrayRef candidates = TISCreateInputSourceList(filter, false);
+        CFRelease(filter);
+
+        if (candidates == nullptr)
+        {
+            return nullptr;
+        }
+
+        CFMutableArrayRef sources = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+        CFIndex candidateCount = CFArrayGetCount(candidates);
+        for (CFIndex i = 0; i < candidateCount; ++i)
+        {
+            auto candidate = (TISInputSourceRef)CFArrayGetValueAtIndex(candidates, i);
+            if (isSwitchableKeyboardSource(candidate))
+            {
+                CFArrayAppendValue(sources, candidate);
+            }
+        }
+        CFRelease(candidates);
+
+        return sources;
+    }
+
+    bool selectInputSourceWithID(const QString& wantedID)
+    {
+        CFArrayRef sources = copySwitchableInputSources();
+        if (sources == nullptr)
+        {
+            return false;
+        }
+
+        bool selected = false;
+        CFIndex count = CFArrayGetCount(sources);
+        for (CFIndex i = 0; i < count && !selected; ++i)
+        {
+            auto source = (TISInputSourceRef)CFArrayGetValueAtIndex(sources, i);
+            if (inputSourceID(source) == wantedID)
+            {
+                selected = (TISSelectInputSource(source) == noErr);
+            }
+        }
+
+        CFRelease(sources);
+        return selected;
+    }
+
+    // Used when there is no remembered previous source yet, or it has since been disabled
+    bool selectNextInputSourceAfter(const QString& currentID)
+    {
+        CFArrayRef sources = copySwitchableInputSources();
+        if (sources == nullptr)
+        {
+            return false;
+        }
+
+        CFIndex count = CFArrayGetCount(sources);
+        if (count < 2)
+        {
+            CFRelease(sources);
+            return false;
+        }
+
+        // Match on the identifier string: two TISInputSourceRef handles to the same
+        // source are not guaranteed to compare equal, so CFEqual is not reliable here.
+        CFIndex currentIndex = -1;
+        for (CFIndex i = 0; i < count; ++i)
+        {
+            if (inputSourceID((TISInputSourceRef)CFArrayGetValueAtIndex(sources, i)) == currentID)
+            {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        CFIndex nextIndex = (currentIndex >= 0) ? ((currentIndex + 1) % count) : 0;
+        auto next = (TISInputSourceRef)CFArrayGetValueAtIndex(sources, nextIndex);
+        bool selected = (next != nullptr) && (TISSelectInputSource(next) == noErr);
+
+        CFRelease(sources);
+        return selected;
+    }
+}
+
 KeyPressCatcher::KeyPressCatcher(std::function<void (const QString& title, const QString& message)> showMessageCallback)
 : m_showMessageCallback{showMessageCallback}
 {    
@@ -20,6 +169,8 @@ KeyPressCatcher::KeyPressCatcher(std::function<void (const QString& title, const
             m_secondShortcutKey = static_cast<CS::SecondShortcutKeyEnum>(keyEnumValue);
         }
     }
+
+    startObservingInputSource();
 
     m_successfully_started = init();
     m_accessibility_granted = AXIsProcessTrusted();
@@ -40,6 +191,8 @@ KeyPressCatcher::~KeyPressCatcher()
 {
     // Saving user preference
     m_settings.setValue(CS::secondShortcutKeySettingKeyword, m_secondShortcutKey);
+
+    stopObservingInputSource();
 
     if (m_eventTapPtr != nullptr)
     {
@@ -108,65 +261,103 @@ void KeyPressCatcher::loop()
     QTimer::singleShot(1000, [this] { loop(); });
 }
 
-void KeyPressCatcher::sendSystemDefaultChangeLanguageShortcut()
+void KeyPressCatcher::startObservingInputSource()
 {
-    // Current keyboard input source
-    TISInputSourceRef current = TISCopyCurrentKeyboardInputSource();
-
-    // Build a list of enabled, selectable keyboard input sources
-    const void* keys[] = {
-        kTISPropertyInputSourceCategory,
-        kTISPropertyInputSourceIsEnabled,
-        kTISPropertyInputSourceIsSelectCapable
-    };
-    const void* values[] = {
-        kTISCategoryKeyboardInputSource,
-        kCFBooleanTrue,
-        kCFBooleanTrue
-    };
-
-    CFDictionaryRef filter = CFDictionaryCreate(kCFAllocatorDefault,
-                                                keys,
-                                                values,
-                                                3,
-                                                &kCFTypeDictionaryKeyCallBacks,
-                                                &kCFTypeDictionaryValueCallBacks);
-
-    CFArrayRef sources = TISCreateInputSourceList(filter, false);
-    if (filter) CFRelease(filter);
-
-    if (!sources) {
-        if (current) CFRelease(current);
+    if (m_observing_input_source)
+    {
         return;
     }
 
-    CFIndex count = CFArrayGetCount(sources);
-    if (count <= 0) {
-        CFRelease(sources);
-        if (current) CFRelease(current);
+    m_currentSourceID = currentInputSourceID();
+
+    // Listening for the system's own notification means switches made from the menu bar
+    // or by another app are remembered too, not just the ones we make ourselves.
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDistributedCenter(),
+                                    this,
+                                    [] (CFNotificationCenterRef, void* observer, CFNotificationName, const void*, CFDictionaryRef)
+                                    {
+                                        static_cast<KeyPressCatcher *>(observer)->onInputSourceChanged();
+                                    },
+                                    kTISNotifySelectedKeyboardInputSourceChanged,
+                                    nullptr,
+                                    CFNotificationSuspensionBehaviorDeliverImmediately);
+
+    m_observing_input_source = true;
+}
+
+void KeyPressCatcher::stopObservingInputSource()
+{
+    if (!m_observing_input_source)
+    {
         return;
     }
 
-    // Find the current index
-    CFIndex currentIndex = -1;
-    for (CFIndex i = 0; i < count; ++i) {
-        TISInputSourceRef s = (TISInputSourceRef)CFArrayGetValueAtIndex(sources, i);
-        if (current && CFEqual(s, current)) {
-            currentIndex = i;
-            break;
-        }
+    CFNotificationCenterRemoveObserver(CFNotificationCenterGetDistributedCenter(),
+                                       this,
+                                       kTISNotifySelectedKeyboardInputSourceChanged,
+                                       nullptr);
+
+    m_observing_input_source = false;
+}
+
+void KeyPressCatcher::onInputSourceChanged()
+{
+    auto nowSelected = currentInputSourceID();
+    if (nowSelected.isEmpty() || nowSelected == m_currentSourceID)
+    {
+        return;
     }
 
-    // Compute next index (wrap-around). If current not found, pick index 0.
-    CFIndex nextIndex = (currentIndex >= 0) ? ((currentIndex + 1) % count) : 0;
-    TISInputSourceRef next = (TISInputSourceRef)CFArrayGetValueAtIndex(sources, nextIndex);
+    m_previousSourceID = m_currentSourceID;
+    m_currentSourceID = nowSelected;
+}
 
-    if (next) {
-        TISSelectInputSource(next);
+void KeyPressCatcher::requestInputSourceSwitch()
+{
+    // Text Input Services must not be called from the event-tap callback: the tap runs on a
+    // latency budget and macOS disables it if we take too long. Hand the work to the event loop.
+    if (m_switch_queued)
+    {
+        return;
     }
 
-    CFRelease(sources);
-    if (current) CFRelease(current);
+    m_switch_queued = true;
+    QTimer::singleShot(0, [this]
+    {
+        m_switch_queued = false;
+        toggleInputSource();
+    });
+}
+
+void KeyPressCatcher::toggleInputSource()
+{
+    auto current = currentInputSourceID();
+
+    // The notification can be missed (it does not fire for the source we start up on),
+    // so reconcile what we think is current before deciding where to go.
+    if (!current.isEmpty() && current != m_currentSourceID)
+    {
+        m_previousSourceID = m_currentSourceID;
+        m_currentSourceID = current;
+    }
+
+    if (!m_previousSourceID.isEmpty() &&
+         m_previousSourceID != current &&
+         selectInputSourceWithID(m_previousSourceID))
+    {
+        return;
+    }
+
+    // Nothing worth going back to yet, or it was removed in System Settings
+    selectNextInputSourceAfter(current);
+}
+
+void KeyPressCatcher::reenableEventTap()
+{
+    if (m_eventTapPtr != nullptr)
+    {
+        CGEventTapEnable(m_eventTapPtr, true);
+    }
 }
 
 void KeyPressCatcher::handleModifierKeysStatusChange(bool shift_pressed_down, bool second_key_pressed_down)
@@ -179,7 +370,7 @@ void KeyPressCatcher::handleModifierKeysStatusChange(bool shift_pressed_down, bo
         }
         else if (!shift_pressed_down && m_pending)
         {
-            sendSystemDefaultChangeLanguageShortcut();
+            requestInputSourceSwitch();
             m_pending = false;
         }
     }
@@ -187,7 +378,7 @@ void KeyPressCatcher::handleModifierKeysStatusChange(bool shift_pressed_down, bo
     {
         if (shift_pressed_down && second_key_pressed_down)
         {
-            sendSystemDefaultChangeLanguageShortcut();
+            requestInputSourceSwitch();
         }
     }
 }
@@ -199,8 +390,16 @@ bool KeyPressCatcher::init()
     m_eventTapPtr = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, kCGEventTapOptionDefault, modifiersPressedMask,
                         [] (CGEventTapProxy, CGEventType type, CGEventRef event, void *keyPressCatcherRawPtr)
                         {
-                           (void)type; // silence unused parameter warning
                            auto catcher = static_cast<KeyPressCatcher *>(keyPressCatcherRawPtr);
+
+                           // These two arrive regardless of the mask we asked for. Without handling
+                           // them the app goes quietly deaf until it is restarted.
+                           if (type == kCGEventTapDisabledByTimeout || type == kCGEventTapDisabledByUserInput)
+                           {
+                               catcher->reenableEventTap();
+                               return event;
+                           }
+
                            CGEventFlags flags = CGEventGetFlags(event);
                            auto secondTriggerKey = catcher->getSecondShortcutKey();
                            // Checking whether a second key that we expected (depending on configuration) was pressed
@@ -220,10 +419,10 @@ bool KeyPressCatcher::init()
        return false;
     }
 
-    CFRunLoopAddSource(CFRunLoopGetCurrent(),
-                       CFMachPortCreateRunLoopSource(kCFAllocatorDefault, m_eventTapPtr, 0),
-                       kCFRunLoopCommonModes);
+    CFRunLoopSourceRef runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, m_eventTapPtr, 0);
+    CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
+    CFRelease(runLoopSource);
 
-     CGEventTapEnable(m_eventTapPtr, true);
-     return true;
+    CGEventTapEnable(m_eventTapPtr, true);
+    return true;
 }
