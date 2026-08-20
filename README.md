@@ -62,8 +62,8 @@ The generated project builds a universal app for Arm and Intel Macs and supports
 * Sourceforge: https://sourceforge.net/projects/commandshift/files/
 * GitHub: https://github.com/VasylBaran/CommandShift/releases/
 
-**Latest (v1.05) CommandShift checksum (MD5)**
-* CommandShift-universal.dmg: 4f27a503617766b62a8874a1a2edaa6f
+**Latest (v1.06) CommandShift checksum (MD5)**
+* CommandShift-universal.dmg: 1181579b479d484781d224c859c5d976
 
 Again, if you have found CommandShift useful please consider supporting my endeavors. It encourages me to further improve, support and update CommandShift as new versions of MacOS come out:
 * **Buy Me a Coffee (Stripe) (one-time):** https://buymeacoffee.com/vasylbaran
