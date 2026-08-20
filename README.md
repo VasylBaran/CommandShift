@@ -47,8 +47,6 @@ The generated project builds a universal app for Arm and Intel Macs and supports
 * **A:** You can add CommandShift to your list of auto-start items by opening System Settings panel -> Users and Groups OR General (depending on what version of macOS you're using) -> Login Items -> [+] -> [select CommandShift app]
 * **Q:** I use 3+ languages. Can CommandShift cycle through all of them?
 * **A:** Yes, CommandShift cycles through all currently enabled input sources
-* **Q:** I want to switch language after releasing Shift key instead of when pressing it
-* **A:** From CommandShift's menu bar at the top-right you can toggle 'Change language after Shift release'
 * **Q:** I want to switch language by just pressing Shift key alone
 * **A:** From CommandShift's menu bar go to "Change language with..." drop-down and select "Shift"
 * **Q:** I want to hide CommandShift icon from menu tray

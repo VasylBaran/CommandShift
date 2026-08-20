@@ -12,7 +12,6 @@
 namespace
 {
     constexpr const char* kHideTrayIconSettingName = "tray_icon/hide";
-    constexpr const char* kChangeLanguageOnReleaseSettingName = "language/trigger_on_key_release";
     constexpr const char* kLegacySettingsImportedKey = "migration/qt_settings_imported_v1";
     constexpr const char* kLegacyBundleIdentifier = "vasybaran.loveFromUkraine.CommandShift";
 
@@ -126,7 +125,6 @@ namespace
 
         NSDictionary<NSString*, NSString*>* legacyValues = ParseLegacyIni(contents);
         ImportLegacyBoolean(legacyValues, defaults, kHideTrayIconSettingName);
-        ImportLegacyBoolean(legacyValues, defaults, kChangeLanguageOnReleaseSettingName);
         return true;
     }
 
@@ -229,7 +227,6 @@ namespace
 @property(nonatomic, strong) NSMenu* menu;
 @property(nonatomic, strong) NSMenu* shortcutMenu;
 @property(nonatomic, strong) NSMenu* trayMenu;
-@property(nonatomic, strong) NSMenuItem* changeLanguageOnReleaseItem;
 @property(nonatomic, strong) NSArray<NSMenuItem*>* shortcutItems;
 @property(nonatomic) BOOL notificationAuthorizationResolved;
 @property(nonatomic) BOOL notificationsAllowed;
@@ -438,13 +435,6 @@ namespace
     }
     self.shortcutItems = shortcutItems;
 
-    self.changeLanguageOnReleaseItem =
-        [[NSMenuItem alloc] initWithTitle:@"Change language after Shift release"
-                                  action:@selector(toggleChangeOnRelease:)
-                           keyEquivalent:@""];
-    self.changeLanguageOnReleaseItem.target = self;
-    [self.menu addItem:self.changeLanguageOnReleaseItem];
-
     self.trayMenu = [[NSMenu alloc] initWithTitle:@"Hide this from menu bar..."];
     NSMenuItem* trayRoot = [[NSMenuItem alloc] initWithTitle:@"Hide this from menu bar..."
                                                       action:nil
@@ -482,12 +472,6 @@ namespace
                          : NSControlStateValueOff;
     }
 
-    bool changeOnRelease = [self.defaults boolForKey:Key(kChangeLanguageOnReleaseSettingName)];
-    self.catcher->setChangeLanguageOnRelease(changeOnRelease);
-    self.changeLanguageOnReleaseItem.state = changeOnRelease
-        ? NSControlStateValueOn
-        : NSControlStateValueOff;
-
     if (![self.defaults boolForKey:Key(kHideTrayIconSettingName)])
     {
         [self createStatusItemIfNeeded];
@@ -510,7 +494,7 @@ namespace
         image.size = NSMakeSize(size, size);
         self.statusItem.button.image = image;
     }
-    self.statusItem.button.toolTip = @"CommandShift (1.06) - developed by Vasyl Baran";
+    self.statusItem.button.toolTip = @"CommandShift (1.07) - developed by Vasyl Baran";
 }
 
 - (void)selectShortcut:(id)sender
@@ -522,15 +506,6 @@ namespace
     {
         shortcutItem.state = shortcutItem == item ? NSControlStateValueOn : NSControlStateValueOff;
     }
-}
-
-- (void)toggleChangeOnRelease:(id)sender
-{
-    (void)sender;
-    bool enabled = !self.catcher->changeLanguageOnRelease();
-    self.catcher->setChangeLanguageOnRelease(enabled);
-    [self.defaults setBool:enabled forKey:Key(kChangeLanguageOnReleaseSettingName)];
-    self.changeLanguageOnReleaseItem.state = enabled ? NSControlStateValueOn : NSControlStateValueOff;
 }
 
 - (void)hideIconPermanently:(id)sender

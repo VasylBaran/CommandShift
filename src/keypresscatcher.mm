@@ -143,16 +143,6 @@ CS::SecondShortcutKeyEnum KeyPressCatcher::getSecondShortcutKey() const
     return m_secondShortcutKey;
 }
 
-void KeyPressCatcher::setChangeLanguageOnRelease(bool changeLanguageOnRelease)
-{
-    m_change_language_on_release = changeLanguageOnRelease;
-}
-
-bool KeyPressCatcher::changeLanguageOnRelease() const
-{
-    return m_change_language_on_release;
-}
-
 void KeyPressCatcher::notifyAboutSuccessfulStart()
 {
     m_showMessageCallback(CS::allGoodTitle, CS::allGoodMessage);
@@ -216,21 +206,34 @@ void KeyPressCatcher::sendSystemDefaultChangeLanguageShortcut()
     });
 }
 
+void KeyPressCatcher::noteUnrelatedInput()
+{
+    if (m_combo_armed)
+    {
+        m_combo_used_with_other_input = true;
+    }
+}
+
 void KeyPressCatcher::handleModifierKeysStatusChange(bool shiftPressedDown, bool secondKeyPressedDown)
 {
-    if (m_change_language_on_release)
+    bool comboActive = shiftPressedDown && secondKeyPressedDown;
+    if (comboActive)
     {
-        if (shiftPressedDown && secondKeyPressedDown)
+        if (!m_combo_armed)
         {
-            m_pending = true;
+            m_combo_armed = true;
+            m_combo_used_with_other_input = false;
         }
-        else if (!shiftPressedDown && m_pending)
-        {
-            sendSystemDefaultChangeLanguageShortcut();
-            m_pending = false;
-        }
+        return;
     }
-    else if (shiftPressedDown && secondKeyPressedDown)
+
+    if (!m_combo_armed)
+    {
+        return;
+    }
+
+    m_combo_armed = false;
+    if (!m_combo_used_with_other_input)
     {
         sendSystemDefaultChangeLanguageShortcut();
     }
@@ -249,19 +252,22 @@ CGEventRef KeyPressCatcher::EventTapCallback(CGEventTapProxy proxy,
         return event;
     }
 
-    if (type == kCGEventFlagsChanged)
+    if (type != kCGEventFlagsChanged)
     {
-        CGEventFlags flags = CGEventGetFlags(event);
-        auto secondTriggerKey = catcher->getSecondShortcutKey();
-        bool secondKeyPressedDown =
-            (secondTriggerKey == CS::SecondShortcutKeyEnum::GlobalFN && flags & kCGEventFlagMaskSecondaryFn) ||
-            (secondTriggerKey == CS::SecondShortcutKeyEnum::Control && flags & kCGEventFlagMaskControl) ||
-            (secondTriggerKey == CS::SecondShortcutKeyEnum::Option && flags & kCGEventFlagMaskAlternate) ||
-            (secondTriggerKey == CS::SecondShortcutKeyEnum::Command && flags & kCGEventFlagMaskCommand) ||
-            secondTriggerKey == CS::SecondShortcutKeyEnum::Nothing;
-        catcher->handleModifierKeysStatusChange((flags & kCGEventFlagMaskShift) != 0,
-                                                secondKeyPressedDown);
+        catcher->noteUnrelatedInput();
+        return event;
     }
+
+    CGEventFlags flags = CGEventGetFlags(event);
+    auto secondTriggerKey = catcher->getSecondShortcutKey();
+    bool secondKeyPressedDown =
+        (secondTriggerKey == CS::SecondShortcutKeyEnum::GlobalFN && flags & kCGEventFlagMaskSecondaryFn) ||
+        (secondTriggerKey == CS::SecondShortcutKeyEnum::Control && flags & kCGEventFlagMaskControl) ||
+        (secondTriggerKey == CS::SecondShortcutKeyEnum::Option && flags & kCGEventFlagMaskAlternate) ||
+        (secondTriggerKey == CS::SecondShortcutKeyEnum::Command && flags & kCGEventFlagMaskCommand) ||
+        secondTriggerKey == CS::SecondShortcutKeyEnum::Nothing;
+    catcher->handleModifierKeysStatusChange((flags & kCGEventFlagMaskShift) != 0,
+                                            secondKeyPressedDown);
 
     return event;
 }
@@ -273,10 +279,17 @@ bool KeyPressCatcher::init()
         return true;
     }
 
+    CGEventMask eventMask = CGEventMaskBit(kCGEventFlagsChanged) |
+                            CGEventMaskBit(kCGEventKeyDown) |
+                            CGEventMaskBit(kCGEventLeftMouseDown) |
+                            CGEventMaskBit(kCGEventRightMouseDown) |
+                            CGEventMaskBit(kCGEventOtherMouseDown) |
+                            CGEventMaskBit(kCGEventScrollWheel);
+
     m_eventTapPtr = CGEventTapCreate(kCGSessionEventTap,
                                      kCGHeadInsertEventTap,
                                      kCGEventTapOptionListenOnly,
-                                     CGEventMaskBit(kCGEventFlagsChanged),
+                                     eventMask,
                                      EventTapCallback,
                                      this);
     if (m_eventTapPtr == nullptr)

@@ -19,9 +19,6 @@ public:
     void setSecondShortcutKey(CS::SecondShortcutKeyEnum keyValue);
     CS::SecondShortcutKeyEnum getSecondShortcutKey() const;
 
-    void setChangeLanguageOnRelease(bool change_language_on_release);
-    bool changeLanguageOnRelease() const;
-
 private:
     static void ScheduleLoop(void* context);
     static CGEventRef EventTapCallback(CGEventTapProxy proxy,
@@ -35,6 +32,7 @@ private:
 
     void notifyAboutSuccessfulStart();
     void sendSystemDefaultChangeLanguageShortcut();
+    void noteUnrelatedInput();
     void handleModifierKeysStatusChange(bool shift_pressed_down, bool second_key_pressed_down);
 
     std::function<void (const std::string& title, const std::string& message)> m_showMessageCallback;
@@ -44,8 +42,8 @@ private:
     bool m_input_monitoring_granted = false;
     bool m_requested_input_monitoring = false;
     bool m_notified_missing_input_monitoring = false;
-    bool m_change_language_on_release = false;
-    bool m_pending = false;
+    bool m_combo_armed = false;
+    bool m_combo_used_with_other_input = false;
     CS::SecondShortcutKeyEnum m_secondShortcutKey = CS::SecondShortcutKeyEnum::Command;
 };
 
